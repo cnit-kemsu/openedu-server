@@ -52,6 +52,7 @@ export function createPaymentRequest(amountValue, additionalInfo) {
   ];
 }
 
+
 // const request = createPaymentRequest(1, 4294967295, 10, { user: { lastname: 'asd', firstname: 'qwe', middlename: 'zxc', email: '123' }, course: { name: 'course', creationDate: '5 september' } });
 // console.log(request);
 
