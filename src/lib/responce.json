@@ -1,0 +1,32 @@
+{
+  "id": 162068,
+  "type": "payment",
+  "order_id": "1570679933113",
+  "terminal_id": "00049688",
+  "token": "BA:07:D3:CB:BC:37:82:4C:97:06:93:F3:A5:64:DF:F8",
+  "request_date": "2019-10-10T10:58:53+07:00",
+  "amount": {
+    "value": 10,
+    "currency": "RUB"
+  },
+  "description": "Плата за курс на сайте bondarev.kemsu.ru",
+  "source_card": {
+    "masked_number": "554373xxxxxx6654",
+    "payment_system": "master_card",
+    "country_code": "RUS",
+    "bank_name": "МДМ Банк"
+  },
+  "additional_info": "{\"user\":{\"id\":21,\"email\":\"johncooper87@mail.ru\",\"lastname\":\"123\",\"firstname\":\"123123\",\"middlename\":\"123\"},\"course\":{\"id\":24,\"name\":\"Course 1\",\"price\":10,\"creationDate\":\"2019-09-27T03:54:46.000Z\"}}",
+  "status": {
+    "type": "success",
+    "error_description": "Approved"
+  },
+  "ref_set": {
+    "auth_code": "322039",
+    "ret_ref_number": "928392417044"
+  },
+  "trans_date": "2019-10-10T06:59:10+03:00",
+  "callback_url": "http://bondarev.kemsu.ru:443/payment-callback",
+  "return_url": "http://bondarev.kemsu.ru:3000/course-delivery/24",
+  "signature": "361E9CAD48CB88555C7B087FB4F6B2DAB21F02BDAE218AD4CE591181AD5EFB4D"
+}
