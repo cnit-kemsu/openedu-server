@@ -1,8 +1,6 @@
 .vscode
 node_modules
-logs
 package-lock.json
 dist
-dist1
 src/config.js
 src/dkim-private.pem
