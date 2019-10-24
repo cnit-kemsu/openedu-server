@@ -1,6 +1,6 @@
 import { types as _, hashPassword, signBearer, GraphQLError, ClientInfo } from '@kemsu/graphql-server';
 import { generatePasskey } from '@lib/generatePasskey';
-import { sendEmail } from '../../sendEmail';
+import { sendEmail } from '@lib/sendEmail';
 import { jwtSecret, sitename } from '../../config';
 
 export default {

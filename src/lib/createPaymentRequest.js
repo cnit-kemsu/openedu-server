@@ -2,9 +2,10 @@ import crypto from 'crypto';
 import {
   sitename,
   url,
+  devUrl,
   payment
 } from '../config';
-const _url = 'http://bondarev.kemsu.ru:443';
+const _url = devUrl || url;
 
 function getRightFormatNowDate(date) {
   const offset = date.getTimezoneOffset();
@@ -51,13 +52,3 @@ export function createPaymentRequest(amountValue, additionalInfo) {
     request
   ];
 }
-
-
-// const request = createPaymentRequest(1, 4294967295, 10, { user: { lastname: 'asd', firstname: 'qwe', middlename: 'zxc', email: '123' }, course: { name: 'course', creationDate: '5 september' } });
-// console.log(request);
-
-// const buff = Buffer.from(request, 'base64');
-// const text = buff.toString('ascii');
-// console.log(text);
-
-//eyJ0b2tlbiI6IjIwOkJBOkI2OkU5OjhBOjM5OkU5OjQ4OjkzOjNCOjhEOjQxOkRGOkREOjYwOjBEIiwib3JkZXJfaWQiOiI0Mjk0OTY3Mjk1XzQyOTQ5NjcyOTUiLCJyZXF1ZXN0X2RhdGUiOiIyMDE5LTA4LTI4VDE1OjMxOjQxKzA3OjAwIiwiYW1vdW50Ijp7InZhbHVlIjoiMTEwLjAwIiwiY3VycmVuY3kiOiJSVUIifSwic2lnbmF0dXJlIjoiNTFiOWEzZjUyM2Q3NzE3Nzc1OWJjYWIzM2FkZTJhNzc1NDE4NWI3MmZjNTU0NGU0MzY1NjdmODAyMWE4ZDBmMyJ9

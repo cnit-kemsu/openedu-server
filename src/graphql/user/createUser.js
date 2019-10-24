@@ -1,7 +1,7 @@
 import { types as _, GraphQLError, ClientInfo } from '@kemsu/graphql-server';
 import { verifyAdminRole } from '@lib/authorization';
 import { generatePasskey } from '@lib/generatePasskey';
-import { sendEmail } from '../../sendEmail';
+import { sendEmail } from '@lib/sendEmail';
 import { sitename, url } from '../../config';
 import RoleInputEnumType from './RoleInputEnumType';
 
