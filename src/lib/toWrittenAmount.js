@@ -33,8 +33,8 @@ function toWrittenDigits(num, units, feminine = false) {
   return writtenDigits.filter(notNull).join(' ') + ' ' + unit;
 }
 
-  const rubArr = ['рубль', 'рубля', 'рублей'];
-  const thausArr = ['тысяча', 'тысячи', 'тысяч'];
+const rubArr = ['рубль', 'рубля', 'рублей'];
+const thausArr = ['тысяча', 'тысячи', 'тысяч'];
 
 export function toWrittenAmount(_amount) {
   const amount = Math.floor(_amount);
