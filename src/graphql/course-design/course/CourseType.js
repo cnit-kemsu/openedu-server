@@ -24,7 +24,12 @@ export default _.Object({
       resolve({ id }, {}, { loaders }, { fields }) {
         return loaders.courseDesign_section_byCourseId.load(id, fields);
       }
-    } |> upgradeResolveFn
+    } |> upgradeResolveFn,
+
+    data: {
+      type: _.JSON,
+      resolve: ({ data }) => resolveJSON(data)
+    }
 
   }
 });

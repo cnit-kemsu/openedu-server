@@ -8,10 +8,13 @@ export default {
     name: { type: _.NonNull(_.String) },
     summary: { type: _.String },
     description: { type: _.JSON },
-    picture: { type: _.JSON }
+    picture: { type: _.JSON },
+    data: { type: _.JSON }
   },
   async resolve(obj, inputArgs, { user, db }) {
     await verifyAdminRole(user, db);
+
+    if (inputArgs.data != null) inputArgs.data = JSON.stringify(inputArgs.data);
 
     try {
       

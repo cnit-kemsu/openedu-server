@@ -80,7 +80,7 @@ function createSertificateContent(course, user, { sertificateNumber }) {
             <div id="name">${course.name}</div>
             <div id="credit_units">(${course.creditUnits} ${toWrittenCrun(course.creditUnits)})</div>
           </div>
-          <div id="date">${new Date().toLocaleString('ru').split(',')[0].replace(/\//g, '.')}</div>
+          <div id="date">${new Date().toISOString().slice(0, 10).split('-').reverse().join('.')}</div>
           <div id="sertificate_number">${sertificateNumber}</div>
         </div>
         <div id="page2">Сертификат 2</div>

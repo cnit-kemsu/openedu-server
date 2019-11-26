@@ -13,7 +13,10 @@ const selectExprListBuilder = {
   summary: 'get_value(summary_value_id)',
 
   section: { sectionId: 'section_id' },
-  units: { id: 'id' }
+  units: { id: 'id' },
+
+  previousSubsectionId: 'get_previous_subsection_delivery_id(id)',
+  nextSubsectionId: 'get_next_subsection_delivery_id(id)'
 };
 
 const whereConditionBuilder = {

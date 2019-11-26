@@ -35,7 +35,10 @@ export default _.Object({
         if (units) return units.sort(sortByIndexNumber);
         return units;
       }
-    } |> upgradeResolveFn
+    } |> upgradeResolveFn,
+
+    previousSubsectionId: { type: _.Int },
+    nextSubsectionId: { type: _.Int }
 
   })
 });

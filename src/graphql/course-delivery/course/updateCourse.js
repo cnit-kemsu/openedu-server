@@ -14,10 +14,13 @@ export default {
     startDate: { type: _.String },
     enrollmentEndDate: { type: _.String },
     price: { type: _.Float },
-    instructorKeys: { type: _.JSON }
+    instructorKeys: { type: _.JSON },
+    data: { type: _.JSON }
   },
   async resolve(obj, { id, instructorKeys, ...inputArgs }, { user, db }) {
     await verifyAdminRole(user, db);
+
+    if (inputArgs.data != null) inputArgs.data = JSON.stringify(inputArgs.data);
 
     try {
       

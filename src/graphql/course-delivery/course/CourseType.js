@@ -37,8 +37,41 @@ export default _.Object({
 
     sections: {
       type: _.List(_.NonNull(SectionType)),
-      resolve({ id }, {}, { loaders }, { fields }) {
-        return loaders.courseDelivery_section_byCourseId.load(id, fields);
+      async resolve({ id }, {}, { loaders }, { fields }) {
+        const sections = await loaders.courseDelivery_section_byCourseId.load(id, fields);
+        // const _units = [];
+        // const nowDate = new Date();
+        // for (const { subsections } of sections) {
+        //   if (subsections) for (const { units, accessDate, expirationDate } of subsections) {
+        //     const available = (accessDate ? accessDate <= nowDate : true) && (expirationDate ? expirationDate >= nowDate : true);
+        //     if (units && available) for (const unit of units)
+        //     _units.push(unit);
+        //   }
+        // }
+        // const unitsLastIndex = _units.length - 1;
+        // for (let index = 0; index <= unitsLastIndex; index++) {
+        //   const unit = _units[index];
+        //   if (index !== 0) unit.prevousUnitId = _units[index - 1].id;
+        //   if (index !== unitsLastIndex) unit.nextUnitId = _units[index + 1].id;
+        // }
+        // const _subsections = [];
+        // const nowDate = new Date();
+        // for (const { subsections } of sections) {
+        //   if (subsections) for (const subsection of subsections) {
+        //     if (subsection) {
+        //       const { accessDate, expirationDate } = subsection;
+        //       const available = (accessDate ? accessDate <= nowDate : true) && (expirationDate ? expirationDate >= nowDate : true);
+        //       if (available) _subsections.push(subsection);
+        //     }
+        //   }
+        // }
+        // const lastIndex = _subsections.length - 1;
+        // for (let index = 0; index <= lastIndex; index++) {
+        //   const unit = _subsections[index];
+        //   if (index !== 0) unit.prevousSubsectionId = _subsections[index - 1].id;
+        //   if (index !== lastIndex) unit.nextSubsectionId = _subsections[index + 1].id;
+        // }
+        return sections;
       }
     } |> upgradeResolveFn,
     instructors: {
@@ -47,7 +80,14 @@ export default _.Object({
         if (!instructors) return null;
         return loaders.user_byId.loadMany(JSON.parse(instructors), fields);
       }
-    } |> upgradeResolveFn
+    } |> upgradeResolveFn,
+
+    isAwaitPurchaseComplition: { type: _.Boolean },
+
+    data: {
+      type: _.JSON,
+      resolve: ({ data }) => resolveJSON(data)
+    }
 
   }
 });

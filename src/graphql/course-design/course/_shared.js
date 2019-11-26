@@ -3,7 +3,8 @@ import { insertFilesOfValue } from '@lib/insertFilesOfValue';
 
 const aliases = {
   name: '_name',
-  creatorId: 'creator_id'
+  creatorId: 'creator_id',
+  data: '_data'
 };
 
 const selectExprListBuilder = {

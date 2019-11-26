@@ -6,6 +6,7 @@ const aliases = {
   creatorId: 'creator_id',
   startDate: 'start_date',
   enrollmentEndDate: 'enrollment_end_date',
+  data: '_data'
 };
 
 const selectExprListBuilder = {
