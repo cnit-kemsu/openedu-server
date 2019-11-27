@@ -1,4 +1,4 @@
-import { types as _, resolveJSON } from '@kemsu/graphql-server';
+import { types as _ } from '@kemsu/graphql-server';
 import { verifyAdminRole } from '@lib/authorization';
 import { getUserProgress } from '../../../lib/getUserProgress';
 
