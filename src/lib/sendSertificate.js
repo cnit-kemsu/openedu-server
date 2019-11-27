@@ -1,11 +1,15 @@
 import path from 'path';
 import { sitename } from '../config';
-import { pool } from './dbPool';
 import { sendEmail } from './sendEmail';
 import { toWrittenCrun } from './toWrittenCrun';
 import { createPdf } from './createPdf';
+import { getUserProgress } from './getUserProgress';
 
-function createSertificateContent(course, user, { sertificateNumber }) {
+function createSertificateContent(course, user, { sertificateNumber, deliveryDate }) {
+
+  const labourInput_creditUnit = course?.data?.labourInput_creditUnit;
+  const _user = user?.data || {};
+
   return `
     <html>
       <head>
@@ -75,12 +79,12 @@ function createSertificateContent(course, user, { sertificateNumber }) {
       <body>
 
         <div id="page1">
-          <div id="fullname">${user.lastname} ${user.firstname} ${user.middlename}</div>
+          <div id="fullname">${_user.lastname} ${_user.firstname} ${_user.middlename}</div>
           <div id="name_and_credit_units">
             <div id="name">${course.name}</div>
-            <div id="credit_units">(${course.creditUnits} ${toWrittenCrun(course.creditUnits)})</div>
+            ${labourInput_creditUnit ? `<div id="credit_units">(${labourInput_creditUnit} ${toWrittenCrun(labourInput_creditUnit)})</div>` : ''}
           </div>
-          <div id="date">${new Date().toISOString().slice(0, 10).split('-').reverse().join('.')}</div>
+          <div id="date">${deliveryDate}</div>
           <div id="sertificate_number">${sertificateNumber}</div>
         </div>
         <div id="page2">Сертификат 2</div>
@@ -92,18 +96,27 @@ function createSertificateContent(course, user, { sertificateNumber }) {
 
 const base = path.resolve(__dirname) |> #.replace(/\\/g, '/') |> 'file:///' + #;
 
-export async function sendSertificate(req, res, next) {
+export async function sendSertificate(db, userId, courseId) {
 
-  const userId = req.params.userId;
-  const courseId = req.params.courseId;
-  const db = await pool.getConnection();
+  const { certificateAvailable } = await getUserProgress(db, courseId, userId);
+  if (!certificateAvailable) throw new Error('Sertificate not awailable');
 
   try {
-    // const info = req.body;
-    // const status = info.status.type === 'success' ? 'success' : 'failed';
-    // await db.query('UPDATE paid_course_purchases SET callback_status = ?, callback_info = ?, callback_date = ? WHERE order_id = ?', [status, info, new Date(), info.order_id]);
-    // const { user, course } = JSON.parse(info.additional_info);
-
+    const [course] = await db.query('SELECT _name name, _data data FROM course_delivery_instances WHERE id = ?', [courseId]);
+    const [user] = await db.query('SELECT email, _data data FROM users WHERE id = ?', [userId]);
+    const [free_enrollment] = await db.query('SELECT _data data FROM free_course_enrollments WHERE course_id = ? AND user_id', [courseId, userId]);
+    const [paid_purchase] = await db.query('SELECT _data data FROM paid_course_purchases WHERE course_id = ? AND user_id', [courseId, userId]);
+    let info = paid_purchase?.data || free_enrollment?.data;
+    if (!info) {
+      info = {
+        sertificateNumber: new Date().valueOf().toString(),
+        deliveryDate: new Date().toISOString().slice(0, 10).split('-').reverse().join('.')
+      };
+      if (free_enrollment) await db.query('UPDATE free_course_enrollments SET _data = ? WHERE course_id = ? AND user_id', [JSON.stringify(info), courseId, userId]);
+      if (paid_purchase) await db.query('UPDATE paid_course_purchases SET _data = ? WHERE course_id = ? AND user_id', [JSON.stringify(info), courseId, userId]);
+    } else info = JSON.parse(info);
+    course.data = JSON.parse(course.data);
+    user.data = JSON.parse(user.data);
     
     const emailSubject = `Сертификат об онлайн-обучении на сайте ${sitename}`;
     const emailHTML = `
@@ -111,16 +124,12 @@ export async function sendSertificate(req, res, next) {
     `;
     const receiptFile = {
       filename: 'Сертификат.pdf',
-      //content: await createSertificateContent(course, user, info) |> createPdf(#, { format: 'A4', width: '350px', height: '500px', "base": "file://" })
-      content: createSertificateContent({ creditUnits: 5, name: 'Управление качеством' }, { lastname: 'Бондарев', firstname: 'Иван', middlename: 'Владимирович' }, { sertificateNumber: '18473626' }) |> await createPdf(#, { format: 'A4', orientation: 'landscape', base })
+      content: createSertificateContent(course, user, info) |> await createPdf(#, { format: 'A4', orientation: 'landscape', base })
     };
-    //sendEmail(user.email, emailSubject, emailHTML, [receiptFile]);
-    sendEmail('johncooper87@mail.ru', emailSubject, emailHTML, [receiptFile]);
+    sendEmail(user.email, emailSubject, emailHTML, [receiptFile]);
 
-  } finally {
-    if (db !== undefined) db.end();
-    res.sendStatus(200);
-    next();
+  } catch(error) {
+    throw error;
   }
   
 }

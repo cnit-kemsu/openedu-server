@@ -7,6 +7,7 @@ import createCourseDeliveryInstance from './course/createCourse';
 import updateCourseDeliveryInstance from './course/updateCourse';
 import defunctCourseDeliveryInstance from './course/defunctCourse';
 import deleteCourseDeliveryInstance from './course/deleteCourse';
+import sendSertificate from './course/sendSertificate';
 import courseLoaders from './course/_loaders';
 
 import courseDeliveryInstanceUserProgress from './course/courseDeliveryInstanceUserProgress';
@@ -48,6 +49,7 @@ export default {
     updateCourseDeliveryInstance,
     defunctCourseDeliveryInstance,
     deleteCourseDeliveryInstance,
+    sendSertificate,
 
     createCourseDeliverySection,
     updateCourseDeliverySection,
