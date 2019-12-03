@@ -25,9 +25,9 @@ BEGIN
 	IF v_expiration_date < NOW() THEN CALL throw_error('access expired'); END IF;
 	
 	IF v_is_paid_course THEN
-		SELECT 1 INTO v_has_access FROM free_course_enrollments;
+		SELECT 1 INTO v_has_access FROM paid_course_purchases WHERE course_id = v_course_id AND user_id = p_user_id AND callback_status = 'success' LIMIT 1;
 	ELSE
-		SELECT 1 INTO v_has_access FROM paid_course_purchases;
+		SELECT 1 INTO v_has_access FROM free_course_enrollments WHERE course_id = v_course_id AND user_id = p_user_id LIMIT 1;
 	END IF;
 	
 	IF NOT v_has_access THEN CALL throw_error('not enrolled'); END IF;

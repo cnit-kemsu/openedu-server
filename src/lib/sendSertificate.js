@@ -96,7 +96,7 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
   const outcomes = course?.data?.outcomes;
   const competencies = course?.data?.competencies;
   const _user = user?.data || {};
-  const creditUnits = labourInput_creditUnit.toString() + ' ' + toWrittenCrun(labourInput_creditUnit);
+  const creditUnits = labourInput_creditUnit ? (labourInput_creditUnit.toString() + ' ' + toWrittenCrun(labourInput_creditUnit)) : null;
   const gradeType = course?.data?.gradeType;
 
   let grade, gradeSystem;
@@ -238,13 +238,15 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
       <body>
 
         <div id="page1">
-          <div id="fullname">${_user.lastname} ${_user.firstname} ${_user.middlename}</div>
+          <div id="fullname">${_user.lastname || ''} ${_user.firstname || ''} ${_user.middlename || ''}</div>
           <div id="name_and_credit_units">
             <div id="name">${course.name}</div>
-            ${labourInput_creditUnit ? `<div id="credit_units">трудоемкостью ${creditUnits},` : ''}
-            ${grade ? `получив ${gradeType === 'LETTER' ? 'оценку ' : ''}"${grade}",` : ''}
-            набрав ${percentage} баллов из 100 </div>
-          </div>
+              <div id="credit_units">
+                ${labourInput_creditUnit ? `трудоемкостью ${creditUnits || ''},` : ''}
+                ${grade ? `получив ${gradeType === 'LETTER' ? 'оценку ' : ''}"${grade}",` : ''}
+                набрав ${percentage} баллов из 100
+              </div>
+            </div>
           <div id="date">${deliveryDate}</div>
           <div id="sertificate_number">${sertificateNumber}</div>
         </div>
@@ -257,7 +259,7 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
                     <tbody>
                       <tr>
                         <td>
-                          ${_user.lastname} ${_user.firstname} ${_user.middlename}
+                          ${_user.lastname || ''} ${_user.firstname || ''} ${_user.middlename || ''}
                         </td>
                       </tr>
                       <tr>
@@ -365,7 +367,11 @@ export async function sendSertificate(db, userId, courseId) {
     `;
     const receiptFile = {
       filename: 'Сертификат.pdf',
-      content: createSertificateContent(course, user, info) |> await createPdf(#, { format: 'A4', orientation: 'landscape', base })
+      content: createSertificateContent(course, user, info) |> await createPdf(#, { 
+        height: "595px",
+        width: "842px",
+        //format: 'Letter',
+        orientation: 'landscape', base })
     };
     sendEmail(user.email, emailSubject, emailHTML, [receiptFile]);
 
