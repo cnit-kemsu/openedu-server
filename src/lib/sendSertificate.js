@@ -1,5 +1,5 @@
 import path from 'path';
-import { sitename } from '../config';
+import { sitename, zoom } from '../config';
 import { sendEmail } from './sendEmail';
 import { toWrittenCrun } from './toWrittenCrun';
 import { createPdf } from './createPdf';
@@ -100,18 +100,22 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
   const gradeType = course?.data?.gradeType;
 
   let grade, gradeSystem;
-  const percentage = totalScore / maxScore * 100;
-  if (gradeType === 'LETTER') {
-    gradeSystem = letterGrade;
-    grade = 'Отлично';
-    if (percentage < 85) grade = 'Хорошо';
-    if (percentage < 71) grade = 'Удовлетворительно';
-    if (percentage < 56) grade = 'Нудовлетворительно';
-  }
-  if (gradeType === 'PASS/FAIL') {
-    gradeSystem = pass_failGrade;
-    grade = 'Зачет';
-    if (percentage < 60) grade = 'Незачет';
+  let percentage;
+
+  if (totalScore && maxScore) {
+  percentage = totalScore / maxScore * 100;
+    if (gradeType === 'LETTER') {
+      gradeSystem = letterGrade;
+      grade = 'Отлично';
+      if (percentage < 85) grade = 'Хорошо';
+      if (percentage < 71) grade = 'Удовлетворительно';
+      if (percentage < 56) grade = 'Нудовлетворительно';
+    }
+    if (gradeType === 'PASS/FAIL') {
+      gradeSystem = pass_failGrade;
+      grade = 'Зачет';
+      if (percentage < 60) grade = 'Незачет';
+    }
   }
 
   return `
@@ -119,6 +123,7 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
       <head>
       <style>
         body {
+          ${zoom ? `zoom: ${zoom};` : ''}
           margin: 0px;
           color: rgb(47, 47, 47);
           font-family: 'calibri';
@@ -144,7 +149,7 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
           width: 55%;
           padding: 20px;
           text-align: center;
-          font-size: 42px;
+          font-size: 28px;
           font-weight: bold;
           text-transform: uppercase;
         }
@@ -157,7 +162,7 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
         #name {
           width: 100%;
           text-align: center;
-          font-size: 42px;
+          font-size: 28px;
           font-weight: bold;
           text-transform: uppercase;
         }
@@ -165,19 +170,19 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
           margin-top: 10px;
           width: 100%;
           text-align: center;
-          font-size: 36px;
+          font-size: 26px;
         }
         #date {
           position: absolute;
           bottom: 52.2%;
           left: 9%;
-          font-size: 28px;
+          font-size: 18px;
         }
         #sertificate_number {
           position: absolute;
           bottom: 61.8%;
           left: 73.3%;
-          font-size: 36px;
+          font-size: 26px;
         }
         #maintable {
           width: 100%;
@@ -211,14 +216,14 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
         }
         #table1 td, #table2 td {
           border-bottom: 1px solid black;
-          font-size: 28px;
+          font-size: 18px;
           padding: 20px;
         }
         .tdlast {
           border-bottom: 0px !important;
         }
         .tdheader {
-          font-size: 32px;
+          font-size: 21px;
           text-align: center;
           width: 100%;
         }
@@ -229,7 +234,7 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
           border-spacing: 0px;
         }
         .gradetable td {
-          font-size: 24px !important;;
+          font-size: 16px !important;;
           border-bottom: 1px solid black;
           border-right: 1px solid black;
           padding: 5px !important;
@@ -244,7 +249,7 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
               <div id="credit_units">
                 ${labourInput_creditUnit ? `трудоемкостью ${creditUnits || ''},` : ''}
                 ${grade ? `получив ${gradeType === 'LETTER' ? 'оценку ' : ''}"${grade}",` : ''}
-                набрав ${percentage} баллов из 100
+                ${percentage ? `набрав ${percentage} баллов из 100` : ''}
               </div>
             </div>
           <div id="date">${deliveryDate}</div>
@@ -268,7 +273,7 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
                           <br />
                           Период освоения курса: ${startDate} - ${deliveryDate}
                           <br />
-                          Трудоемкость: ${creditUnits} (часов: ${laborInput_hours})
+                          Трудоемкость: ${creditUnits || ''} (часов: ${laborInput_hours})
                         </td>
                       </tr>
                         <td>
@@ -371,7 +376,8 @@ export async function sendSertificate(db, userId, courseId) {
         height: "595px",
         width: "842px",
         //format: 'Letter',
-        orientation: 'landscape', base })
+        //orientation: 'landscape',
+        base })
     };
     sendEmail(user.email, emailSubject, emailHTML, [receiptFile]);
 
