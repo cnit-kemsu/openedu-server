@@ -50,7 +50,7 @@ CREATE TABLE unverified_accounts (
 
   user_id INT UNSIGNED NOT NULL,
   passkey VARCHAR(20) NOT NULL,
-  delivered TINYINT(1) NOT NULL DEFAULT 0,
+  delivered BOOLEAN NOT NULL DEFAULT 0,
 
   PRIMARY KEY(user_id),
   FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -65,7 +65,7 @@ CREATE TABLE course_design_templates (
   description_value_id INT UNSIGNED,
   picture_value_id INT UNSIGNED,
   creator_id INT UNSIGNED NOT NULL,
-  defunct TINYINT(1) NOT NULL DEFAULT 0,
+  defunct BOOLEAN NOT NULL DEFAULT 0,
   
   PRIMARY KEY(id),
   UNIQUE(_name),
@@ -82,12 +82,12 @@ CREATE TABLE course_delivery_instances (
   description_value_id INT UNSIGNED,
   picture_value_id INT UNSIGNED,
 	creator_id INT UNSIGNED NOT NULL,
-  defunct TINYINT(1) NOT NULL DEFAULT 0,
+  defunct BOOLEAN NOT NULL DEFAULT 0,
 	course_design_template_id INT UNSIGNED,
   creation_date DATETIME NOT NULL,
   start_date DATETIME,
   enrollment_end_date DATETIME,
-  price FLOAT,
+  price DECIMAL(11, 2),
   
   PRIMARY KEY(id),
   FOREIGN KEY(summary_value_id) REFERENCES _values(id) ON DELETE SET NULL ON UPDATE SET NULL,
