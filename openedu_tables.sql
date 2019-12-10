@@ -38,8 +38,8 @@ CREATE TABLE users (
   role ENUM('superuser', 'admin', 'instructor', 'student') NOT NULL,
   email VARCHAR(50) NOT NULL,
   pwdhash VARCHAR(132),
-  _data LONGTEXT,
   picture_value_id INT UNSIGNED,
+  _data LONGTEXT,
 
   PRIMARY KEY(id),
   UNIQUE(email),
@@ -50,7 +50,7 @@ CREATE TABLE unverified_accounts (
 
   user_id INT UNSIGNED NOT NULL,
   passkey VARCHAR(20) NOT NULL,
-  delivered BOOLEAN NOT NULL DEFAULT 0,
+  delivered BOOLEAN NOT NULL DEFAULT FALSE,
 
   PRIMARY KEY(user_id),
   FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -65,7 +65,8 @@ CREATE TABLE course_design_templates (
   description_value_id INT UNSIGNED,
   picture_value_id INT UNSIGNED,
   creator_id INT UNSIGNED NOT NULL,
-  defunct BOOLEAN NOT NULL DEFAULT 0,
+  _data LONGTEXT,
+  defunct BOOLEAN NOT NULL DEFAULT FALSE,
   
   PRIMARY KEY(id),
   UNIQUE(_name),
@@ -82,8 +83,10 @@ CREATE TABLE course_delivery_instances (
   description_value_id INT UNSIGNED,
   picture_value_id INT UNSIGNED,
 	creator_id INT UNSIGNED NOT NULL,
-  defunct BOOLEAN NOT NULL DEFAULT 0,
-	course_design_template_id INT UNSIGNED,
+	_data LONGTEXT,
+  defunct BOOLEAN NOT NULL DEFAULT FALSE,
+  
+	template_id INT UNSIGNED,
   creation_date DATETIME NOT NULL,
   start_date DATETIME,
   enrollment_end_date DATETIME,
@@ -101,7 +104,7 @@ CREATE TABLE course_design_sections (
   course_id INT UNSIGNED NOT NULL,
   _name VARCHAR(100) NOT NULL,
   summary_value_id INT UNSIGNED,
-  index_number TINYINT UNSIGNED,
+  sequence_number TINYINT UNSIGNED,
   
   PRIMARY KEY(id),
   UNIQUE(_name, course_id),
@@ -115,7 +118,7 @@ CREATE TABLE course_delivery_sections (
   course_id INT UNSIGNED NOT NULL,
   _name VARCHAR(100) NOT NULL,
   summary_value_id INT UNSIGNED,
-  index_number TINYINT UNSIGNED,
+  sequence_number TINYINT UNSIGNED,
   
   PRIMARY KEY(id),
   UNIQUE(_name, course_id),
@@ -131,7 +134,7 @@ CREATE TABLE course_design_subsections (
   summary_value_id INT UNSIGNED,
   access_period INT UNSIGNED,
   expiration_period INT UNSIGNED,
-  index_number TINYINT UNSIGNED,
+  sequence_number TINYINT UNSIGNED,
   
   PRIMARY KEY(id),
   UNIQUE(_name, section_id),
@@ -147,7 +150,7 @@ CREATE TABLE course_delivery_subsections (
   summary_value_id INT UNSIGNED,
   access_date DATETIME,
   expiration_date DATETIME,
-  index_number TINYINT UNSIGNED,
+  sequence_number TINYINT UNSIGNED,
   
   PRIMARY KEY(id),
   UNIQUE(_name, section_id),
@@ -163,7 +166,7 @@ CREATE TABLE course_design_units (
   summary_value_id INT UNSIGNED,
   _type ENUM('document', 'file-document', 'video', 'quiz') NOT NULL,
   data_value_id INT UNSIGNED,
-  index_number TINYINT UNSIGNED,
+  sequence_number TINYINT UNSIGNED,
   
   PRIMARY KEY(id),
   UNIQUE(_name, subsection_id),
@@ -180,7 +183,7 @@ CREATE TABLE course_delivery_units (
   summary_value_id INT UNSIGNED,
   _type ENUM('document', 'file-document', 'video', 'quiz') NOT NULL,
   data_value_id INT UNSIGNED,
-  index_number TINYINT UNSIGNED,
+  sequence_number TINYINT UNSIGNED,
   
   PRIMARY KEY(id),
   UNIQUE(_name, subsection_id),
@@ -193,7 +196,7 @@ CREATE TABLE instructor_assignments (
 
   user_id INT UNSIGNED NOT NULL,
   course_id INT UNSIGNED,
-  accepted TINYINT(1),
+  accepted BOOLEAN,
   
   PRIMARY KEY(user_id, course_id),
   FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -204,7 +207,8 @@ CREATE TABLE free_course_enrollments (
 
   user_id INT UNSIGNED NOT NULL,
   course_id INT UNSIGNED NOT NULL,
-  enrollment_date DATETIME NOT NULL,
+  enrollment_date DATETIME NOT NULL DEFAULT NOW(),
+  _data LONGTEXT,
 
   PRIMARY KEY(user_id, course_id),
   FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -216,15 +220,16 @@ CREATE TABLE paid_course_purchases (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   order_id TEXT NOT NULL,
   purchase_date DATETIME NOT NULL DEFAULT NOW(),
-  user_id INT UNSIGNED NOT NULL,
-  course_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED,
+  course_id INT UNSIGNED,
   callback_status ENUM('success', 'failed'),
   callback_info TEXT,
   callback_date DATETIME,
+  _data LONGTEXT,
   
   PRIMARY KEY(id),
-  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY(course_id) REFERENCES course_delivery_instances(id) ON DELETE CASCADE ON UPDATE CASCADE
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
+  FOREIGN KEY(course_id) REFERENCES course_delivery_instances(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE TABLE quiz_attempts (
@@ -242,5 +247,6 @@ CREATE TABLE quiz_attempts (
   
   PRIMARY KEY(user_id, unit_id, data_value_id),
   FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY(unit_id) REFERENCES course_delivery_units(id) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY(data_value_id) REFERENCES _values(id) ON DELETE CASCADE ON UPDATE CASCADE
 );

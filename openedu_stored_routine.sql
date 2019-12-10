@@ -5,7 +5,7 @@ DELIMITER //
 
 -- bug#1: trigger does not fire when an action is called from another trigger
 
-CREATE OR REPLACE PROCEDURE throw_error(p_message_text TINYTEXT)
+CREATE OR REPLACE PROCEDURE _throw_error(p_message_text TINYTEXT)
 BEGIN
 	SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = p_message_text;
 END;
@@ -209,52 +209,50 @@ BEGIN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot create course delivery instance, because one or more of its units has data_value_id is set to NULL';
 	END IF;
 	
-	INSERT INTO course_delivery_instances SELECT
-		NULL,
+	INSERT INTO course_delivery_instances (_name, summary_value_id, description_value_id, picture_value_id, creator_id, _data, template_id, creation_date, start_date, enrollment_end_date, price) SELECT
 		_name,
 		_increase_value_total_attachments(summary_value_id),
 		_increase_value_total_attachments(description_value_id),
 		_increase_value_total_attachments(picture_value_id),
-		p_template_id,
 		p_creator_id,
+		_data,		
+		p_template_id,
 		NOW(),
 		p_start_date,
 		p_enrollment_end_date,
-		p_price,
-		0,
-		_data
+		p_price
+		
 	FROM course_design_templates WHERE id = p_template_id;
 	SET v_course_insert_id = LAST_INSERT_ID();
 	
-	FOR _current_section IN (SELECT id, _name, summary_value_id FROM course_design_sections WHERE course_id = p_template_id) DO
+	FOR _current_section IN (SELECT id, _name, summary_value_id, sequence_number FROM course_design_sections WHERE course_id = p_template_id) DO
 		
-		INSERT INTO course_delivery_sections VALUES (
-			NULL,
+		INSERT INTO course_delivery_sections (course_id, _name, summary_value_id, sequence_number) VALUES (
 			v_course_insert_id,
 			_current_section._name,
-			_increase_value_total_attachments(_current_section.summary_value_id)
+			_increase_value_total_attachments(_current_section.summary_value_id),
+			_current_section.sequence_number
 		);
 		SET v_section_insert_id = LAST_INSERT_ID();
 		
-		FOR _current_subsection IN (SELECT id, _name, summary_value_id, access_period, expiration_period FROM course_design_subsections WHERE section_id = _current_section.id) DO
+		FOR _current_subsection IN (SELECT id, _name, summary_value_id, access_period, expiration_period, sequence_number FROM course_design_subsections WHERE section_id = _current_section.id) DO
 			
-			INSERT INTO course_delivery_subsections VALUES (
-				NULL,
+			INSERT INTO course_delivery_subsections (section_id, _name, summary_value_id, access_period, expiration_period, sequence_number) VALUES (
 				v_section_insert_id,
 				_current_subsection._name,
 				_increase_value_total_attachments(_current_subsection.summary_value_id),
 				IF(_current_subsection.access_period IS NULL, NULL, DATE_ADD(p_start_date, INTERVAL _current_subsection.access_period DAY)),
-				IF(_current_subsection.expiration_period IS NULL, NULL, DATE_ADD(p_start_date, INTERVAL _current_subsection.expiration_period DAY))
+				IF(_current_subsection.expiration_period IS NULL, NULL, DATE_ADD(p_start_date, INTERVAL _current_subsection.expiration_period DAY)),
+				_current_subsection.sequence_number
 			);
 			
-			INSERT INTO course_delivery_units SELECT 
-				NULL,
+			INSERT INTO course_delivery_units (subsection_id, _name, summary_value_id, _type, data_value_id, sequence_number) SELECT 
 				LAST_INSERT_ID(),
 				_name,
 				_increase_value_total_attachments(summary_value_id),
 				_type,
 				_increase_value_total_attachments(data_value_id),
-				index_number
+				sequence_number
 			FROM course_design_units WHERE subsection_id = v_id;
 			
 		END FOR;
@@ -262,56 +260,6 @@ BEGIN
 	END FOR;
 	
 	RETURN v_course_insert_id;
-END;
-
-CREATE OR REPLACE FUNCTION get_previous_subsection_delivery_id(p_subsection_id INT UNSIGNED) RETURNS INT UNSIGNED
-BEGIN
-	DECLARE v_section_id INT UNSIGNED;
-	DECLARE v_sequence_number INT UNSIGNED;
-	DECLARE v_previous_section_id INT UNSIGNED;
-	SELECT section_id, index_number INTO v_section_id, v_sequence_number FROM course_delivery_subsections WHERE id = p_subsection_id;
-	-- in case the subsection with the specified identifier is the first of the current the section in order of sequence number
-	IF (SELECT id FROM course_delivery_subsections WHERE section_id = v_section_id ORDER BY -index_number DESC LIMIT 1) = p_subsection_id THEN
-	
-		SET v_previous_section_id = (WITH current_section AS (SELECT id, course_id, index_number FROM course_delivery_sections WHERE id = v_section_id)
-			SELECT s1.id, s1.index_number FROM course_delivery_sections s1, current_section s2 WHERE s1.course_id = s2.course_id
-			AND IF(s2.index_number IS NULL, IF(s1.index_number IS NULL, s1.id < s2.id, 1), s1.index_number < s2.index_number)
-			ORDER BY -s1.index_number, s1.id DESC LIMIT 1
-		);
-		-- if the previous section is not found, then returns 'NULL'
-		IF v_previous_section_id IS NULL THEN
-			RETURN NULL;
-		END IF;
-		-- otherwise returns the last subsection of the previous section
-		RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_previous_section_id ORDER BY -index_number LIMIT 1);
-	END IF;
-	-- in case the specified subsection is not the first, then returns the previous subsection of the current section
-	RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_section_id AND index_number < v_sequence_number ORDER BY -index_number LIMIT 1);
-END;
-
-CREATE OR REPLACE FUNCTION get_next_subsection_delivery_id(p_subsection_id INT UNSIGNED) RETURNS INT UNSIGNED
-BEGIN
-	DECLARE v_section_id INT UNSIGNED;
-	DECLARE v_sequence_number INT UNSIGNED;
-	DECLARE v_next_section_id INT UNSIGNED;
-	SELECT section_id, index_number INTO v_section_id, v_sequence_number FROM course_delivery_subsections WHERE id = p_subsection_id;
-	-- in case the subsection with the specified identifier is the last of the current the section in order of sequence number
-	IF (SELECT id FROM course_delivery_subsections WHERE section_id = v_section_id ORDER BY -index_number LIMIT 1) = p_subsection_id THEN
-		
-		SET v_next_section_id = (WITH current_section AS (SELECT id, course_id, index_number FROM course_delivery_sections WHERE id = v_section_id)
-			SELECT s1.id, s1.index_number FROM course_delivery_sections s1, current_section s2 WHERE s1.course_id = s2.course_id
-			AND IF(s1.index_number IS NULL, IF(s2.index_number IS NULL, s1.id > s2.id, 1), s1.index_number > s2.index_number)
-			ORDER BY -s1.index_number DESC, s1.id LIMIT 1
-		);
-		-- if the next section is not found, then returns 'NULL'
-		IF v_next_section_id IS NULL THEN
-			RETURN NULL;
-		END IF;
-		-- otherwise returns the first subsection of the next section
-		RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_previous_section_id ORDER BY -index_number DESC LIMIT 1);
-	END IF;
-	-- in case the specified subsection is not the last, then returns the next subsection of the current section
-	RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_section_id AND (index_number > v_sequence_number OR index_number IS NULL) ORDER BY -index_number DESC LIMIT 1);
 END;
 
 CREATE OR REPLACE TRIGGER before_course_delivery_instance_delete BEFORE DELETE ON course_delivery_instances FOR EACH ROW
@@ -350,7 +298,7 @@ BEGIN
 END;
 
 --
--- entry routine
+-- sequence routine
 --
 
 CREATE OR REPLACE PROCEDURE move_entry_over(p_entity_type ENUM(
@@ -366,29 +314,29 @@ BEGIN
 	DECLARE v_entry_id_array TEXT;
 	DECLARE v_current_entry_id INT UNSIGNED;
 	DECLARE v_current_sequence_number INT UNSIGNED DEFAULT 0;
-	DECLARE v_sequence_numbers TEXT DEFAULT '{}';
+	DECLARE v_new_sequence_numbers TEXT DEFAULT '{}';
 	
 	-- finds the parent entry identifier, then, using it, finds all entries with the identifier found and extracts them into the array in order of sequence number
 	-- 'ORDER BY -index_number DESC' is used insted of 'ORDER BY index_number' to put entries with a sequence number of 'NULL' at the end
 	CASE p_entity_type
 		WHEN 'course_design_section' THEN
 			SET v_parent_entry_id = (SELECT course_id FROM course_design_sections WHERE id = p_moving_entry_id);
-			SET v_entry_id_array = (SELECT group_concat(id SEPARATOR ',') FROM course_design_sections WHERE course_id = v_parent_entry_id ORDER BY -index_number DESC);
+			SET v_entry_id_array = (SELECT GROUP_CONCAT(id SEPARATOR ',') FROM course_design_sections WHERE course_id = v_parent_entry_id ORDER BY -sequence_number DESC);
 		WHEN 'course_design_subsection' THEN
 			SET v_parent_entry_id = (SELECT section_id FROM course_design_subsections WHERE id = p_moving_entry_id);
-			SET v_entry_id_array = (SELECT group_concat(id SEPARATOR ',') FROM course_design_subsections WHERE section_id = v_parent_entry_id ORDER BY -index_number DESC);
+			SET v_entry_id_array = (SELECT GROUP_CONCAT(id SEPARATOR ',') FROM course_design_subsections WHERE section_id = v_parent_entry_id ORDER BY -sequence_number DESC);
     	WHEN 'course_design_unit' THEN
     		SET v_parent_entry_id = (SELECT subsection_id FROM course_design_units WHERE id = p_moving_entry_id);
-			SET v_entry_id_array = (SELECT group_concat(id SEPARATOR ',') FROM course_design_units WHERE subsection_id = v_parent_entry_id ORDER BY -index_number DESC);
+			SET v_entry_id_array = (SELECT GROUP_CONCAT(id SEPARATOR ',') FROM course_design_units WHERE subsection_id = v_parent_entry_id ORDER BY -sequence_number DESC);
     	WHEN 'course_delivery_section' THEN
     		SET v_parent_entry_id = (SELECT course_id FROM course_delivery_sections WHERE id = p_moving_entry_id);
-			SET v_entry_id_array = (SELECT group_concat(id SEPARATOR ',') FROM course_delivery_sections WHERE course_id = v_parent_entry_id ORDER BY -index_number DESC);
+			SET v_entry_id_array = (SELECT GROUP_CONCAT(id SEPARATOR ',') FROM course_delivery_sections WHERE course_id = v_parent_entry_id ORDER BY -sequence_number DESC);
 		WHEN 'course_delivery_subsection' THEN
 			SET v_parent_entry_id = (SELECT section_id FROM course_delivery_subsections WHERE id = p_moving_entry_id);
-			SET v_entry_id_array = (SELECT group_concat(id SEPARATOR ',') FROM course_delivery_subsections WHERE section_id = v_parent_entry_id ORDER BY -index_number DESC);
+			SET v_entry_id_array = (SELECT GROUP_CONCAT(id SEPARATOR ',') FROM course_delivery_subsections WHERE section_id = v_parent_entry_id ORDER BY -sequence_number DESC);
     	WHEN 'course_delivery_unit' THEN
     		SET v_parent_entry_id = (SELECT subsection_id FROM course_delivery_units WHERE id = p_moving_entry_id);
-			SET v_entry_id_array = (SELECT group_concat(id SEPARATOR ',') FROM course_delivery_units WHERE subsection_id = v_parent_entry_id ORDER BY -index_number DESC);
+			SET v_entry_id_array = (SELECT GROUP_CONCAT(id SEPARATOR ',') FROM course_delivery_units WHERE subsection_id = v_parent_entry_id ORDER BY -sequence_number DESC);
   	END CASE;
 	SET v_entry_id_array = CONCAT('[', v_entry_id_array, ']');
 	
@@ -399,60 +347,115 @@ BEGIN
 		SET v_current_entry_id = JSON_VALUE(v_entry_id_array, CONCAT('$[', _index, ']'));
 		-- if the current identifier is equal to the one before which to put, then set the sequence number of the moving entry to the current sequence number
 		IF v_current_entry_id = p_put_before_entry_id THEN
-			SET v_sequence_numbers = JSON_INSERT(v_sequence_numbers, CONCAT('$.', p_moving_entry_id), v_current_sequence_number);
+			SET v_new_sequence_numbers = JSON_INSERT(v_sequence_numbers, CONCAT('$.', p_moving_entry_id), v_current_sequence_number);
 			SET v_current_sequence_number = v_current_sequence_number + 1;
 		END IF;
 		-- if the current identifier is not equal to the moving one, then set the sequence number of the current entry to the current sequence number
 		IF v_current_entry_id != p_moving_entry_id THEN
-			SET v_sequence_numbers = JSON_INSERT(v_sequence_numbers, CONCAT('$.', v_current_entry_id), v_current_sequence_number);
+			SET v_new_sequence_numbers = JSON_INSERT(v_sequence_numbers, CONCAT('$.', v_current_entry_id), v_current_sequence_number);
 			SET v_current_sequence_number = v_current_sequence_number + 1;
 		END IF;
 	END FOR;
 	-- if the identifier before which to put is not specified, then set the sequence number of the moving entry to the last
 	IF p_put_before_entry_id IS NULL THEN
-		SET v_sequence_numbers = JSON_INSERT(v_sequence_numbers, CONCAT('$.', p_moving_entry_id), v_current_sequence_number);
+		SET v_new_sequence_numbers = JSON_INSERT(v_sequence_numbers, CONCAT('$.', p_moving_entry_id), v_current_sequence_number);
 	END IF;
 	
 	-- updates sequence numbers of entries with the same parent entry identifier according to the previously created object
 	CASE p_entity_type
 		WHEN 'course_design_section' THEN
-			UPDATE course_design_sections SET index_number = JSON_VALUE(v_entry_indexes, CONCAT('$.', id)) WHERE course_id = v_parent_entry_id;
+			UPDATE course_design_sections SET sequence_number = JSON_VALUE(v_new_sequence_numbers, CONCAT('$.', id)) WHERE course_id = v_parent_entry_id;
 		WHEN 'course_design_subsection' THEN
-			UPDATE course_design_subsections SET index_number = JSON_VALUE(v_entry_indexes, CONCAT('$.', id)) WHERE section_id = v_parent_entry_id;
+			UPDATE course_design_subsections SET sequence_number = JSON_VALUE(v_new_sequence_numbers, CONCAT('$.', id)) WHERE section_id = v_parent_entry_id;
     	WHEN 'course_design_unit' THEN
-    		UPDATE course_design_units SET index_number = JSON_VALUE(v_entry_indexes, CONCAT('$.', id)) WHERE subsection_id = v_parent_entry_id;
+    		UPDATE course_design_units SET sequence_number = JSON_VALUE(v_new_sequence_numbers, CONCAT('$.', id)) WHERE subsection_id = v_parent_entry_id;
     	WHEN 'course_delivery_section' THEN
-    		UPDATE course_delivery_sections SET index_number = JSON_VALUE(v_entry_indexes, CONCAT('$.', id)) WHERE course_id = v_parent_entry_id;
+    		UPDATE course_delivery_sections SET sequence_number = JSON_VALUE(v_new_sequence_numbers, CONCAT('$.', id)) WHERE course_id = v_parent_entry_id;
 		WHEN 'course_delivery_subsection' THEN
-			UPDATE course_delivery_subsections SET index_number = JSON_VALUE(v_entry_indexes, CONCAT('$.', id)) WHERE section_id = v_parent_entry_id;
+			UPDATE course_delivery_subsections SET sequence_number = JSON_VALUE(v_new_sequence_numbers, CONCAT('$.', id)) WHERE section_id = v_parent_entry_id;
     	WHEN 'course_delivery_unit' THEN
-    		UPDATE course_delivery_units SET index_number = JSON_VALUE(v_entry_indexes, CONCAT('$.', id)) WHERE subsection_id = v_parent_entry_id;
+    		UPDATE course_delivery_units SET sequence_number = JSON_VALUE(v_new_sequence_numbers, CONCAT('$.', id)) WHERE subsection_id = v_parent_entry_id;
 	END CASE;
 END;
 
-CREATE OR REPLACE FUNCTION get_entry_course_id(p_entity_type ENUM(
-	'course_delivery_subsection',
-	'course_delivery_unit'
-), p_instance_id INT UNSIGNED) RETURNS INT UNSIGNED
+CREATE OR REPLACE FUNCTION _is_follow_before(p_current_sequence_number INT UNSIGNED, p_sequence_number INT UNSIGNED, p_current_id INT UNSIGNED, p_id INT UNSIGNED) RETURNS BOOLEAN
 BEGIN
+	IF p_sequence_number IS NULL THEN
+		IF p_current_sequence_number IS NULL THEN
+			RETURN p_current_id < p_id;
+		END IF;
+		RETURN TRUE;
+	END IF;
+	RETURN p_current_sequence_number < p_sequence_number;
+END;
 
-	IF p_entity_type = 'course_delivery_subsection' THEN
-		RETURN (
-			SELECT course_id FROM course_delivery_sections WHERE id = (
-				SELECT section_id FROM course_delivery_subsections WHERE id = p_instance_id
-			)
-		);
-	END IF;
+CREATE OR REPLACE FUNCTION get_previous_subsection_delivery_id(p_subsection_id INT UNSIGNED) RETURNS INT UNSIGNED
+BEGIN
+	DECLARE v_section_id INT UNSIGNED;
+	DECLARE v_sequence_number INT UNSIGNED;
+	DECLARE v_course_id INT UNSIGNED;
+	DECLARE v_section_sequence_number INT UNSIGNED;
+	DECLARE v_previous_section_id INT UNSIGNED;
 	
-	IF p_entity_type = 'course_delivery_subsection' THEN
-		RETURN (
-			SELECT course_id FROM course_delivery_sections WHERE id = (
-				SELECT section_id FROM course_delivery_subsections WHERE id = (
-					SELECT subsection_id FROM course_delivery_units WHERE id = p_instance_id
-				)
-			)
+	SELECT section_id, sequence_number INTO v_section_id, v_sequence_number FROM course_delivery_subsections WHERE id = p_subsection_id;
+	-- if the subsection with the specified identifier is the first of the section in order of sequence number, then finds the previous section identifier
+	IF (SELECT id FROM course_delivery_subsections WHERE section_id = v_section_id ORDER BY -sequence_number DESC LIMIT 1) = p_subsection_id THEN
+	
+		SELECT course_id, sequence_number INTO v_course_id, v_section_sequence_number FROM course_delivery_sections WHERE id = v_section_id;
+		SET v_previous_section_id = (
+			SELECT id, sequence_number FROM course_delivery_sections WHERE course_id = v_course_id
+			AND _is_follow_before(sequence_number, v_section_sequence_number, id, v_section_id)
+			ORDER BY -sequence_number, id DESC LIMIT 1
 		);
+		-- if the previous section identifier is not found, then returns 'NULL'
+		IF v_previous_section_id IS NULL THEN
+			RETURN NULL;
+		END IF;
+		-- otherwise returns the last subsection identifier of the previous section
+		RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_previous_section_id ORDER BY -sequence_number, id DESC LIMIT 1);
 	END IF;
+	-- if the specified subsection is not the first, then returns the previous subsection identifier of the section
+	RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_section_id AND _is_follow_before(sequence_number, v_sequence_number, id, p_subsection_id) ORDER BY -sequence_number, id DESC LIMIT 1);
+END;
+
+CREATE OR REPLACE FUNCTION _is_follow_after(p_current_sequence_number INT UNSIGNED, p_sequence_number INT UNSIGNED, p_current_id INT UNSIGNED, p_id INT UNSIGNED) RETURNS BOOLEAN
+BEGIN
+	IF p_current_sequence_number IS NULL THEN
+		IF p_sequence_number IS NULL THEN
+			RETURN p_current_id > p_id;
+		END IF;
+		RETURN TRUE;
+	END IF;
+	RETURN p_current_sequence_number > p_sequence_number;
+END;
+
+CREATE OR REPLACE FUNCTION get_next_subsection_delivery_id(p_subsection_id INT UNSIGNED) RETURNS INT UNSIGNED
+BEGIN
+	DECLARE v_section_id INT UNSIGNED;
+	DECLARE v_sequence_number INT UNSIGNED;
+	DECLARE v_course_id INT UNSIGNED;
+	DECLARE v_section_sequence_number INT UNSIGNED;
+	DECLARE v_next_section_id INT UNSIGNED;
+	
+	SELECT section_id, sequence_number INTO v_section_id, v_sequence_number FROM course_delivery_subsections WHERE id = p_subsection_id;
+	-- if the subsection with the specified identifier is the last of the section in order of sequence number, then finds the next section identifier
+	IF (SELECT id FROM course_delivery_subsections WHERE section_id = v_section_id ORDER BY -sequence_number LIMIT 1) = p_subsection_id THEN
+		
+		SELECT course_id, sequence_number INTO v_course_id, v_section_sequence_number FROM course_delivery_sections WHERE id = v_section_id;
+		SET v_next_section_id = (
+			SELECT id, sequence_number FROM course_delivery_sections WHERE course_id = v_course_id
+			AND _is_follow_after(sequence_number, v_section_sequence_number, id, v_section_id)
+			ORDER BY -sequence_number DESC LIMIT 1
+		);
+		-- if the next section identifier is not found, then returns 'NULL'
+		IF v_next_section_id IS NULL THEN
+			RETURN NULL;
+		END IF;
+		-- otherwise returns the first subsection identifier of the next section
+		RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_previous_section_id ORDER BY -sequence_number DESC LIMIT 1);
+	END IF;
+	-- if the specified subsection is not the last, then returns the next subsection identifier of the section
+	RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_section_id AND _is_follow_after(sequence_number, v_sequence_number, id, p_subsection_id) ORDER BY -sequence_number DESC LIMIT 1);
 END;
 
 --
@@ -487,6 +490,31 @@ BEGIN
 	END IF;
 	
 	INSERT INTO free_course_enrollments (user_id, course_id, enrollment_date) VALUES (p_user_id, p_course_id, v_now_date);
+END;
+
+CREATE OR REPLACE FUNCTION get_entry_course_id(p_entity_type ENUM(
+	'course_delivery_subsection',
+	'course_delivery_unit'
+), p_instance_id INT UNSIGNED) RETURNS INT UNSIGNED
+BEGIN
+
+	IF p_entity_type = 'course_delivery_subsection' THEN
+		RETURN (
+			SELECT course_id FROM course_delivery_sections WHERE id = (
+				SELECT section_id FROM course_delivery_subsections WHERE id = p_instance_id
+			)
+		);
+	END IF;
+	
+	IF p_entity_type = 'course_delivery_subsection' THEN
+		RETURN (
+			SELECT course_id FROM course_delivery_sections WHERE id = (
+				SELECT section_id FROM course_delivery_subsections WHERE id = (
+					SELECT subsection_id FROM course_delivery_units WHERE id = p_instance_id
+				)
+			)
+		);
+	END IF;
 END;
 
 CREATE OR REPLACE FUNCTION check_user_access_to_entry(p_user_id INT UNSIGNED, p_entity_type ENUM(
@@ -538,7 +566,7 @@ END;
 -- quiz routine
 --
 
-CREATE OR REPLACE PROCEDURE check_user_ability_to_perform_quiz(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED)
+CREATE OR REPLACE PROCEDURE _check_user_ability_to_perform_quiz(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED)
 BEGIN
   DECLARE v_has_access TINYINT(1) DEFAULT 0;
 	DECLARE v_access_date DATETIME;
@@ -547,8 +575,8 @@ BEGIN
 	DECLARE v_subsection_id INT UNSIGNED;
   
 	CALL verify_session_user_role_assigned(p_user_id);
-	IF @role = 'null' THEN CALL throw_error('undefined user'); END IF;
-	IF @role != 'student' THEN CALL throw_error('invalid role'); END IF;
+	IF @role = 'null' THEN CALL _throw_error('undefined user'); END IF;
+	IF @role != 'student' THEN CALL _throw_error('invalid role'); END IF;
 	
 	SELECT c.id, access_date, expiration_date INTO v_course_id, v_access_date, v_expiration_date FROM course_delivery_instances AS c
 	JOIN course_delivery_sections AS s ON s.course_id = c.id
@@ -556,18 +584,18 @@ BEGIN
 	JOIN course_delivery_units AS u ON u.subsection_id = ss.id
 	WHERE u.id = p_unit_id;
 	
-	IF v_access_date > NOW() THEN CALL throw_error('access closed'); END IF;
-	IF v_expiration_date < NOW() THEN CALL throw_error('access expired'); END IF;	
+	IF v_access_date > NOW() THEN CALL _throw_error('access closed'); END IF;
+	IF v_expiration_date < NOW() THEN CALL _throw_error('access expired'); END IF;	
 	
 	SET v_has_access = is_enrolled_to_course(p_user_id, v_course_id);
-	IF NOT v_has_access THEN CALL throw_error('not enrolled'); END IF;
+	IF NOT v_has_access THEN CALL _throw_error('not enrolled'); END IF;
 END;
 
 CREATE OR REPLACE PROCEDURE create_quiz_attempt(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED)
 BEGIN
   DECLARE v_data_value_id INT UNSIGNED;
   
-  CALL check_user_ability_to_perform_quiz(p_user_id, p_unit_id);
+  CALL _check_user_ability_to_perform_quiz(p_user_id, p_unit_id);
   
   SET v_data_value_id = (SELECT data_value_id FROM course_delivery_units WHERE id = p_unit_id);
   SELECT _increase_value_total_attachments(v_data_value_id);
@@ -576,7 +604,7 @@ END;
 
 CREATE OR REPLACE PROCEDURE submit_quiz_reply(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED, p_reply LONGTEXT, p_score SMALLINT UNSIGNED, p_feedback LONGTEXT)
 BEGIN
-	CALL check_user_ability_to_perform_quiz(p_user_id, p_unit_id);
+	CALL _check_user_ability_to_perform_quiz(p_user_id, p_unit_id);
   UPDATE quiz_attempts SET last_submitted_reply = p_reply, score = p_score, feedback = p_feedback, last_submit_date = NOW(), replies_count = replies_count + 1 WHERE user_id = p_user_id AND unit_id = p_unit_id;
 END;
 

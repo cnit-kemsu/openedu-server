@@ -18,30 +18,21 @@ const selectExprListBuilder = {
 };
 
 const whereConditionBuilder = {
-  keys(keyArray) {
-    return `id IN (${keyArray})`;
-  },
+  keys: keyArray => `id IN (${keyArray})`,
   name: '_name LIKE ?'
 };
 
 const assignmentListBuilder = {
   ...aliases,
-  summary(value, { isUpdateClause }) {
-    return isUpdateClause
-    ? ['summary_value_id = update_value(summary_value_id, ?, NULL)', value]
-    : ['summary_value_id = create_value(?, NULL)', value];
-  },
-  async description(value, { db, isUpdateClause }) {
+  
+  summary: value => ['summary_value_id = set_value(summary_value_id, ?, NULL)', value],
+  async description(value, { db }) {
     const fileIdArray = await insertFilesOfValue(db, value);
-    return isUpdateClause
-    ? [`description_value_id = update_value(description_value_id, ?, '${fileIdArray}')`, value]
-    : [`description_value_id = create_value(?, '${fileIdArray}')`, JSON.stringify(value)];
+    return [`description_value_id = set_value(description_value_id, ?, ?)`, value, fileIdArray];
   },
-  async picture(value, { isUpdateClause, db }) {
-    const fileId = await insertFilesOfValue(db, value);
-    return isUpdateClause
-    ? [`picture_value_id = update_value(picture_value_id, ?, '${fileId}')`, JSON.stringify(value)]
-    : [`picture_value_id = create_value(?, '${fileId}')`, value];
+  async picture(value, { db }) {
+    const fileIdArray = await insertFilesOfValue(db, value);
+    return [`picture_value_id = set_value(picture_value_id, ?, ?)`, value, fileIdArray];
   }
 };
 
