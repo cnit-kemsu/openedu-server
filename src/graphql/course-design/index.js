@@ -12,11 +12,13 @@ import courseLoaders from './course/_loaders';
 import createCourseDesignSection from './section/createSection';
 import updateCourseDesignSection from './section/updateSection';
 import deleteCourseDesignSection from './section/deleteSection';
+import moveCourseDesignSection from './unit/moveSection';
 import sectionLoaders from './section/_loaders';
 
 import createCourseDesignSubsection from './subsection/createSubsection';
 import updateCourseDesignSubsection from './subsection/updateSubsection';
 import deleteCourseDesignSubsection from './subsection/deleteSubsection';
+import moveCourseDesignSubsection from './unit/moveSubsection';
 import subsectionLoaders from './subsection/_loaders';
 
 import courseDesignUnit from './unit/unit';
@@ -43,10 +45,12 @@ export default {
     createCourseDesignSection,
     updateCourseDesignSection,
     deleteCourseDesignSection,
+    moveCourseDesignSection,
 
     createCourseDesignSubsection,
     updateCourseDesignSubsection,
     deleteCourseDesignSubsection,
+    moveCourseDesignSubsection,
 
     createCourseDesignUnit,
     updateCourseDesignUnit,

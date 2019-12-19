@@ -462,12 +462,27 @@ END;
 -- access routine
 --
 
+CREATE OR REPLACE FUNCTION get_user_courses(p_user_id INT UNSIGNED) RETURNS TEXT
+BEGIN
+	RETURN (
+		SELECT GROUP_CONCAT(course_id SEPARATOR ',') FROM (
+			(SELECT course_id FROM free_course_enrollments WHERE user_id = p_user_id )
+			UNION ALL
+			(SELECT course_id FROM paid_course_purchases WHERE user_id = p_user_id AND callback_status = 'success')
+			UNION ALL
+			(SELECT course_id FROM instructor_assignments WHERE user_id = p_user_id AND accepted = TRUE)
+		) AS courses_user_enrolled
+	);
+END;
+
 CREATE OR REPLACE FUNCTION is_enrolled_to_course(p_user_id INT UNSIGNED, p_course_id INT UNSIGNED) RETURNS BOOLEAN
 BEGIN
 	RETURN (
 		(SELECT 1 FROM free_course_enrollments WHERE user_id = p_user_id AND course_id = p_course_id)
 		UNION ALL
 		(SELECT 1 FROM paid_course_purchases WHERE user_id = p_user_id AND course_id = p_course_id AND callback_status = 'success')
+		UNION ALL
+		(SELECT 1 FROM instructor_assignments WHERE user_id = p_user_id AND course_id = p_course_id AND accepted = TRUE)
 		LIMIT 1
 	);
 END;

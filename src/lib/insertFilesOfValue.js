@@ -46,5 +46,5 @@ export async function insertFilesOfValue(db, value) {
   
   replaceFilesOfValueWithSourceKeys(value, insertIdArray);
   const fileIdArray = collectFileSourceKeysOfValue(value);
-  return fileIdArray.join(',');
+  return fileIdArray.join(',') |> `'${#}'`;
 }

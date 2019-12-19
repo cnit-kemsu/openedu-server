@@ -1,5 +1,5 @@
 import { types as _, upgradeResolveFn } from '@kemsu/graphql-server';
-import { sortByIndexNumber } from '@lib/sortByIndexNumber';
+import { sortByIndexNumber } from '@lib/sortBySequenceNumber';
 import { resolveDate } from '@lib/resolvers';
 import SectionType from '../section/SectionType';
 import UnitType from '../unit/UnitType';

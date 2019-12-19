@@ -8,8 +8,8 @@ export default {
   async resolve(obj, search, { user, db }) {
     await verifyAdminRole(user, db);
 
-    const [whereClause, params] = sqlBuilder.buildWhereClause(search, ['defunct = 0']);
-    return await db.query(`SELECT COUNT(*) count FROM course_design_templates ${whereClause}`, params)
+    const whereClause = sqlBuilder.buildWhereClause(search, ['defunct = 0']);
+    return await db.query(`SELECT COUNT(1) count FROM course_design_templates ${whereClause}`)
     |> #[0].count;
   }
 };

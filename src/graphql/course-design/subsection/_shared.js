@@ -1,43 +1,30 @@
-import { types as _, SQLBuilder } from '@kemsu/graphql-server';
-
-const aliases = {
-  name: '_name',
-  sectionId: 'section_id', 
-};
+import { types as _, SQLBuilder, escape } from '@kemsu/graphql-server';
 
 const selectExprListBuilder = {
-  ...aliases,
+  name: '_name',
+  sectionId: 'section_id',
   accessPeriod: 'access_period',
   expirationPeriod: 'expiration_period',
+  sequenceNumber: 'sequence_number',
 
   summary: 'get_value(summary_value_id)',
 
-  section: { sectionId: 'section_id' },
-  units: { id: 'id' }
+  section: ['section_id'],
+  units: ['id']
 };
 
 const whereConditionBuilder = {
-  keys(keyArray) {
-    return `id IN (${keyArray})`;
-  },
-  sectionKeys(keyArray) {
-    return `section_id IN (${keyArray})`;
-  }
+  keys: values => `id IN (${values.join(', ')})`,
+  sectionKeys: values => `section_id IN (${values.join(', ')})`
 };
 
 const assignmentListBuilder = {
-  ...aliases,
-  accessPeriod(value) {
-    return ["access_period = ?", value ? value : null];
-  },
-  expirationPeriod(value) {
-    return ["expiration_period = ?", value ? value : null];
-  },
-  summary(value, { isUpdateClause }) {
-    return isUpdateClause
-    ? ['summary_value_id = update_value(summary_value_id, ?, NULL)', value]
-    : ['summary_value_id = create_value(?, NULL)', value];
-  }
+  name: value => `_name = ${escape(value)}`,
+  sectionId: value => `section_id = ${value}`,
+  accessPeriod: value => `access_period = ${value ? value : null}`,
+  expirationPeriod: value => `expiration_period = ${value ? value : null}`,
+  
+  summary: value => `summary_value_id = set_value(summary_value_id, ${escape(value)}, NULL)`
 };
 
 export const sqlBuilder = new SQLBuilder(

@@ -20,8 +20,8 @@ export default {
       
       await db.beginTransaction();
 
-      const [assignmentList, params] = await sqlBuilder.buildAssignmentList(inputArgs, { isUpdateClause: false, db });
-      const { insertId } = await db.query(`INSERT INTO course_design_templates SET ${assignmentList}, creator_id = ?`, [...params, user.id]);
+      const assignmentList = await sqlBuilder.buildAssignmentList({ ...inputArgs, creatorId: user.id }, { db });
+      const { insertId } = await db.query(`INSERT INTO course_design_templates SET ${assignmentList}`);
 
       await db.commit();
       return insertId;

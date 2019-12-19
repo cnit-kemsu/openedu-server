@@ -11,8 +11,8 @@ export default {
   async resolve(obj, { id }, { user, db }, { fields }) {
     await verifyAdminRole(user, db);
 
-    const [selectExprList] = sqlBuilder.buildSelectExprList(fields);
-    return await db.query(`SELECT ${selectExprList} FROM course_design_units WHERE id = ?`, id)
+    const selectExprList = sqlBuilder.buildSelectExprList(fields);
+    return await db.query(`SELECT ${selectExprList} FROM course_design_units WHERE id = ${id}`)
     |> #[0];
   }
 } |> upgradeResolveFn;

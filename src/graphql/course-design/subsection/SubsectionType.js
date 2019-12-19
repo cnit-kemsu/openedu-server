@@ -1,5 +1,5 @@
 import { types as _, upgradeResolveFn } from '@kemsu/graphql-server';
-import { sortByIndexNumber } from '@lib/sortByIndexNumber';
+import { sortBySequenceNumber } from '@lib/sortBySequenceNumber';
 import SectionType from '../section/SectionType';
 import UnitType from '../unit/UnitType';
 
@@ -22,10 +22,8 @@ export default _.Object({
     units: {
       type: _.List(_.NonNull(UnitType)),
       async resolve({ id }, {}, { loaders }, { fields }) {
-        fields.indexNumber = null;
-        const units = await loaders.courseDesign_unit_bySubsectionId.load(id, fields);
-        if (units) return units.sort(sortByIndexNumber);
-        return units;
+        return await loaders.courseDesign_unit_bySubsectionId.load(id, { ...fields, sequenceNumber: null })
+        |> #.sort(sortBySequenceNumber);
       }
     } |> upgradeResolveFn
 

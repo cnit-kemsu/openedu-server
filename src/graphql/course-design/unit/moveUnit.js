@@ -4,14 +4,14 @@ import { verifyAdminRole } from '@lib/authorization';
 export default {
   type: _.NonNull(_.Int),
   args: {
-    movableUnitId: { type: _.NonNull(_.Int) },
-    frontUnitId: { type: _.Int }
+    movingUnitId: { type: _.NonNull(_.Int) },
+    putBeforeUnitId: { type: _.Int }
   },
-  async resolve(obj, { movableUnitId, frontUnitId = null }, { user, db }) {
+  async resolve(obj, { movingUnitId, putBeforeUnitId = null }, { user, db }) {
     await verifyAdminRole(user, db);
 
     try {
-      await db.query(`CALL move_course_design_unit(?, ?)`, [movableUnitId, frontUnitId]);
+      await db.query(`CALL move_entry_over('course_design_unit', ${movingUnitId}, ${putBeforeUnitId})`);
       return 1;
     } catch(error) {
       throw error;

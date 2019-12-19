@@ -11,6 +11,14 @@ function byId(keys, { db }, fields) {
   );
 }
 
+function instructors_byCourseId(courseKeys, { db }, fields) {
+
+  const selectExprList = sqlBuilder.buildSelectExprList({ ...fields });
+  const whereClause = sqlBuilder.buildWhereClause({ courseKeys });
+  return db.query(`SELECT ${selectExprList} FROM users ${whereClause} WHERE id IN ()`);
+}
+
 export default {
-  byId
+  byId,
+  instructors_byCourseId
 };

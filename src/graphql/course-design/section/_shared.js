@@ -1,35 +1,25 @@
-import { SQLBuilder } from '@kemsu/graphql-server';
-
-const aliases = {
-  name: '_name',
-  courseId: 'course_id'
-};
+import { SQLBuilder, escape } from '@kemsu/graphql-server';
 
 const selectExprListBuilder = {
-  ...aliases,
+  name: '_name',
+  courseId: 'course_id',
+  sequenceNumber: 'sequence_number',
 
   summary: 'get_value(summary_value_id)',
 
-  course: { courseId: 'course_id' },
-  subsections: { id: 'id' }
+  course: ['course_id'],
+  subsections: ['id']
 };
 
 const whereConditionBuilder = {
-  keys(keyArray) {
-    return `id IN (${keyArray})`;
-  },
-  courseKeys(keyArray) {
-    return `course_id IN (${keyArray})`;
-  }
+  keys: values => `id IN (${values.join(', ')})`,
+  courseKeys: values => `course_id IN (${values.join(', ')})`
 };
 
 const assignmentListBuilder = {
-  ...aliases,
-  summary(value, { isUpdateClause }) {
-    return isUpdateClause
-    ? ['summary_value_id = update_value(summary_value_id, ?, NULL)', value]
-    : ['summary_value_id = create_value(?, NULL)', value];
-  }
+  name: value => `_name = ${escape(value)}`,
+  
+  summary: value => `summary_value_id = set_value(summary_value_id, ${escape(value)}, NULL)`
 };
 
 export const sqlBuilder = new SQLBuilder(

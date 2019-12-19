@@ -13,11 +13,10 @@ export default {
   async resolve(obj, { limit = 10, offset = 0, ...search }, { user, db }, { fields }) {
     await verifyAdminRole(user, db);
 
-    const [selectExprList] = sqlBuilder.buildSelectExprList(fields);
-    const [whereClause, params] = sqlBuilder.buildWhereClause(search, ['defunct = 0']);
+    const selectExprList = sqlBuilder.buildSelectExprList(fields);
+    const whereClause = sqlBuilder.buildWhereClause(search, ['defunct = FALSE']);
     try {
-      const res = await db.query(`SELECT ${selectExprList} FROM course_design_templates ${whereClause} LIMIT ? OFFSET ?`, [...params, limit, offset]);
-      return res;
+      return await db.query(`SELECT ${selectExprList} FROM course_design_templates ${whereClause} LIMIT ${limit} OFFSET ${offset}`);
     }
     catch (error) {
       throw error;

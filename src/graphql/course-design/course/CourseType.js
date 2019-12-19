@@ -1,4 +1,5 @@
 import { types as _, resolveJSON, upgradeResolveFn } from '@kemsu/graphql-server';
+import { sortBySequenceNumber } from '@lib/sortBySequenceNumber';
 import SectionType from '../section/SectionType';
 
 export default _.Object({
@@ -21,8 +22,9 @@ export default _.Object({
 
     sections: {
       type: _.List(_.NonNull(SectionType)),
-      resolve({ id }, {}, { loaders }, { fields }) {
-        return loaders.courseDesign_section_byCourseId.load(id, fields);
+      async resolve({ id }, {}, { loaders }, { fields }) {
+        return await loaders.courseDesign_section_byCourseId.load(id, { ...fields, sequenceNumber: null })
+        |> #.sort(sortBySequenceNumber);
       }
     } |> upgradeResolveFn,
 

@@ -7,24 +7,15 @@ export default {
   args: {
     limit: { type: _.Int },
     offset: { type: _.Int },
-    availableToEnroll: { type: _.Boolean },
     ...searchArgs,
-    onlyEnrolled: { type: _.Boolean }
+    
   },
-  async resolve(obj, { limit = 10, offset = 0, availableToEnroll, onlyEnrolled, ...search }, { user, db }, { fields }) {
+  async resolve(obj, { limit = 10, offset = 0, ...search }, { user, db }, { fields }) {
 
-    const extraFilter = ['defunct = 0'];
-    if (onlyEnrolled && user) extraFilter.push(
-      user.role === 'student'
-      ? `id IN (SELECT course_id FROM free_course_enrollments WHERE user_id = ${user.id} UNION ALL SELECT course_id FROM paid_course_purchases WHERE user_id = ${user.id})`
-      : `id IN (SELECT course_id FROM instructor_assignments WHERE user_id = ${user.id})`
-    );
-    if (availableToEnroll) extraFilter.push('(enrollment_end_date > NOW() OR enrollment_end_date IS NULL)');
-    const [selectExprList, params1] = sqlBuilder.buildSelectExprList(fields, { userId: user?.id });
-    const [whereClause, params2] = sqlBuilder.buildWhereClause(search, extraFilter);
+    const selectExprList = sqlBuilder.buildSelectExprList(fields, { user, enrolledFilterPassed: search.currentUserEnrolled === true });
+    const whereClause = sqlBuilder.buildWhereClause(search, ['defunct = 0'], { user });
     try {
-      const res = await db.query(`SELECT ${selectExprList} FROM course_delivery_instances ${whereClause} LIMIT ? OFFSET ?`, [...params1, ...params2, limit, offset]);
-      return res;
+      return await db.query(`SELECT ${selectExprList} FROM course_delivery_instances ${whereClause} LIMIT ${limit} OFFSET ${offset}`);
     }
     catch (error) {
       throw error;

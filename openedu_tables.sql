@@ -86,6 +86,8 @@ CREATE TABLE course_delivery_instances (
 	_data LONGTEXT,
   defunct BOOLEAN NOT NULL DEFAULT FALSE,
   
+  available_to_enroll BOOLEAN AS (enrollment_end_date > NOW() OR enrollment_end_date IS NULL) VIRTUAL,
+  
 	template_id INT UNSIGNED,
   creation_date DATETIME NOT NULL,
   start_date DATETIME,

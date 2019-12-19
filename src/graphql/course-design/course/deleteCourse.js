@@ -9,7 +9,7 @@ export default {
   async resolve(obj, { id }, { user, db }) {
     await verifySuperuserRole(user, db);
 
-    const { affectedRows } = await db.query(`DELETE FROM course_design_templates WHERE id = ?`, id);
+    const { affectedRows } = await db.query(`DELETE FROM course_design_templates WHERE id = ${id}`);
     return affectedRows;
   }
 };

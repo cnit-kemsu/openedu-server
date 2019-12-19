@@ -14,29 +14,27 @@ export default {
     startDate: { type: _.String },
     enrollmentEndDate: { type: _.String },
     price: { type: _.Float },
-    instructorKeys: { type: _.JSON },
+    instructorKeys: { type: _.List(_.NonNull(_.Int)) },
     data: { type: _.JSON }
   },
   async resolve(obj, { id, instructorKeys, ...inputArgs }, { user, db }) {
     await verifyAdminRole(user, db);
 
-    if (inputArgs.data != null) inputArgs.data = JSON.stringify(inputArgs.data);
-
     try {
       
       await db.beginTransaction();
 
-      let affectedRows1 = 0;
-      const [assignmentList, params] = await sqlBuilder.buildAssignmentList(inputArgs, { db });
+      let affectedRows = 0;
+      const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs, { db });
       if (assignmentList !== '') {
-        const { affectedRows } = await db.query(`UPDATE course_delivery_instances SET ${assignmentList} WHERE id = ?`, [...params, id]);
-        affectedRows1 = affectedRows;
+        affectedRows += await db.query(`UPDATE course_delivery_instances SET ${assignmentList} WHERE id = ${id}`)
+        |> #.affectedRows;
       }
-      const affectedRows2 = await assignInstructors(id, instructorKeys, db);
+      affectedRows += await assignInstructors(db, id, instructorKeys);
 
-      if (affectedRows1 || affectedRows2) {
+      if (affectedRows > 0) {
         await db.commit();
-        return 1;
+        return affectedRows;
       }
 
       await db.rollback();

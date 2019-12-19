@@ -9,7 +9,7 @@ export default {
   async resolve(obj, { id }, { user, db }) {
     await verifyAdminRole(user, db);
 
-    const { affectedRows } = await db.query(`UPDATE course_delivery_instances SET defunct = 1 WHERE id = ?`, id);
+    const { affectedRows } = await db.query(`UPDATE course_delivery_instances SET defunct = 1 WHERE id = ${id}`);
     return affectedRows;
   }
 };
