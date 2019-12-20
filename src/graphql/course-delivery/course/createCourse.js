@@ -11,7 +11,7 @@ export default {
     price: { type: _.Float },
     instructorKeys: { type: _.List(_.NonNull(_.Int)) }
   },
-  async resolve(obj, { templateId, startDate= null, enrollmentEndDate = null, price = null, instructorKeys }, { user, db }) {
+  async resolve(obj, { templateId, startDate = null, enrollmentEndDate = null, price = null, instructorKeys }, { user, db }) {
     await verifyAdminRole(user, db);
 
     try {

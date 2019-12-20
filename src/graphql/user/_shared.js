@@ -15,13 +15,14 @@ function searchWord(word) {
   return escapePattern(word, pattern)
   |> `(email LIKE ${#} OR JSON_VALUE(_data, '$.firstname') LIKE ${#} OR JSON_VALUE(_data, '$.lastname') LIKE ${#})`;
 }
+const mapRole = value => `'${value}'`;
 const whereConditionBuilder = {
   keys: values => `id IN (${values.join(', ')})`,
   searchText: text => text
     .trim().replace(/\s{2,}/g, ' ').split(' ')
     .map(searchWord)
     .join(' AND '),
-  roles: values => `role IN (${values.join(', ')})`
+  roles: values => `role IN (${values.map(mapRole).join(', ')})`
 };
 
 const assignmentListBuilder = {
