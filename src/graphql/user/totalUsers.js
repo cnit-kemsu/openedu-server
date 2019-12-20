@@ -1,6 +1,6 @@
 import { types as _ } from '@kemsu/graphql-server';
 import { verifyAdminRole } from '@lib/authorization';
-import { sqlBuilder, roleFilter, searchArgs } from './_shared';
+import { sqlBuilder, searchArgs } from './_shared';
 
 export default {
   type: _.NonNull(_.Int),
@@ -8,8 +8,8 @@ export default {
   async resolve(obj, search, { user, db }) {
     await verifyAdminRole(user, db);
 
-    const [whereClause, params] = sqlBuilder.buildWhereClause(search, [roleFilter]);
-    return await db.query(`SELECT COUNT(*) count FROM users ${whereClause}`, params)
+    const whereClause = sqlBuilder.buildWhereClause(search);
+    return await db.query(`SELECT COUNT(1) count FROM users ${whereClause}`)
     |> #[0].count;
   }
 };

@@ -12,8 +12,8 @@ export default {
     const [attempt] = await db.query(`
       SELECT start_date startDate, last_submitted_reply lastSubmittedReply, replies_count repliesCount, score, feedback
       FROM quiz_attempts
-      WHERE user_id = ? AND unit_id = ?;
-    `, [user.id, unitId]);
+      WHERE user_id = ${user.id} AND unit_id = ${unitId};
+    `);
 
     if (!attempt) return attempt;
     if (attempt.lastSubmittedReply) attempt.lastSubmittedReply = JSON.parse(attempt.lastSubmittedReply);

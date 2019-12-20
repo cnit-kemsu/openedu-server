@@ -1,33 +1,33 @@
-import { types as _, SQLBuilder } from '@kemsu/graphql-server';
+import { types as _, SQLBuilder, escapePattern, escape, jsonToString, getJSON } from '@kemsu/graphql-server';
 import { insertFilesOfValue } from '@lib/insertFilesOfValue';
-import { buildSQLSetJSON } from '@lib/buildSQLSetJSON';
+import RoleEnumType from './RoleEnumType';
 
 const selectExprListBuilder = {
-  verified: "CASE WHEN passkey IS NULL THEN 1 ELSE 0 END",
-  firstname: "JSON_VALUE(_data, '$.firstname')",
-  lastname: "JSON_VALUE(_data, '$.lastname')",
-  middlename: "JSON_VALUE(_data, '$.middlename')",
-  picture: "(SELECT _value FROM _values WHERE _values.id = picture_value_id)"
+  verified: `IF(passkey IS NULL, TRUE, FALSE)`,
+  firstname: getJSON('_data', 'firstname'),
+  lastname: getJSON('_data', 'lastname'),
+  middlename: getJSON('_data', 'middlename'),
+  picture: `get_value(picture_value_id)`
 };
 
+const pattern = word => `%${word}%`;
+function searchWord(word) {
+  return escapePattern(word, pattern)
+  |> `(email LIKE ${#} OR JSON_VALUE(_data, '$.firstname') LIKE ${#} OR JSON_VALUE(_data, '$.lastname') LIKE ${#})`;
+}
 const whereConditionBuilder = {
-  keys(keyArray) {
-    return `id IN (${keyArray})`;
-  },
-  email: 'email LIKE ?',
-  courseKeys(keyArray) {
-    return `id IN (SELECT user_id FROM course_delivery_instructors WHERE course_delivery_instance_id IN (${keyArray}))`;
-  }
+  keys: values => `id IN (${values.join(', ')})`,
+  searchText: text => text
+    .trim().replace(/\s{2,}/g, ' ').split(' ')
+    .map(searchWord)
+    .join(' AND '),
+  roles: values => `role IN (${values.join(', ')})`
 };
 
 const assignmentListBuilder = {
-  data(value) {
-    return buildSQLSetJSON('_data', value);
-  },
-  async picture(value, { db }) {
-    const fileId = await insertFilesOfValue(db, value);
-    return [`picture_value_id = update_value(picture_value_id, ?, '${fileId}')`, JSON.stringify(value)];
-  }
+  data: value => `_data = ${jsonToString(value)}`,
+  picture: async(value, { db }) => await insertFilesOfValue(db, value)
+    |> `picture_value_id = set_value(picture_value_id, ${jsonToString(value)}, ${#})`
 };
 
 export const sqlBuilder = new SQLBuilder(
@@ -37,8 +37,7 @@ export const sqlBuilder = new SQLBuilder(
 );
 
 export const searchArgs = {
-  keys: { type: _.JSON },
-  email: { type: _.String }
+  keys: { type: _.List(_.Int) },
+  searchText: { type: _.String },
+  roles: { type: _.List(RoleEnumType) }
 };
-
-export const roleFilter = "role IN ('admin', 'instructor')";

@@ -8,8 +8,8 @@ export default {
   async resolve(obj, args, { user, db }, { fields }) {
     await verifyUserRole(user, db);
 
-    const [selectExprList] = sqlBuilder.buildSelectExprList(fields);
-    return await db.query(`SELECT ${selectExprList} FROM users WHERE id = ?`, user.id)
+    const selectExprList = sqlBuilder.buildSelectExprList(fields);
+    return await db.query(`SELECT ${selectExprList} FROM users WHERE id = ${user.id}`)
     |> #[0];
   }
 } |> upgradeResolveFn;

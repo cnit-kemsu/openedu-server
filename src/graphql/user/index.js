@@ -1,10 +1,9 @@
 import { Loader, collation } from '@kemsu/graphql-server';
 
-import users from './users';
+import allUsers from './allUsers';
 import totalUsers from './totalUsers';
 import userInfo from './userInfo';
 import userProfile from './userProfile';
-import instructors from './instructors';
 
 import createUser from './createUser';
 import deleteUser from './deleteUser';
@@ -15,10 +14,9 @@ import loaders from './_loaders';
 
 export default {
   query: {
-    users,
+    allUsers,
     totalUsers,
     userInfo,
-    instructors,
     userProfile
   },
   mutation: {
@@ -28,6 +26,8 @@ export default {
     updateUserProfile
   },
   loaders: {
-    user_byId: new Loader(loaders.byId, collation.find('id'))
+    user_byId: new Loader(loaders.byId, collation.find('id')),
+    user_instructor_byCourseId: new Loader(loaders.instructor_byCourseId, collation.filter('courseId')),
+    user_student_byCourseId: new Loader(loaders.student_byCourseId, collation.filter('courseId'))
   }
 };

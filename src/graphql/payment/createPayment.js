@@ -11,11 +11,11 @@ export default {
     const role = await verifyUserRole(user, db);
     if (role !== 'student') throw new GraphQLError("Only students can pay for a course", ClientInfo.UNMET_CONSTRAINT);
 
-    const [purchase] = await db.query("SELECT id FROM paid_course_purchases WHERE user_id = ? AND course_id = ? AND callback_status != 'failed'", [user.id, courseId]);
+    const [purchase] = await db.query(`SELECT id FROM paid_course_purchases WHERE user_id = ${user.id} AND course_id = ${courseId} AND callback_status != 'failed'`);
     if (purchase) throw new GraphQLError("You've already paid for this course", ClientInfo.UNMET_CONSTRAINT);
 
-    const [{ email, data }] = await db.query('SELECT email, _data data FROM users WHERE id = ?', user.id);
-    const [{ price, name, creationDate }] = await db.query('SELECT price, _name name, creation_date creationDate FROM course_delivery_instances WHERE id = ?', courseId);
+    const [{ email, data }] = await db.query(`SELECT email, _data data FROM users WHERE id = ${user.id}`, user.id);
+    const [{ price, name, creationDate }] = await db.query(`SELECT price, _name name, creation_date creationDate FROM course_delivery_instances WHERE id = ${courseId}`);
 
     const { lastname, firstname, middlename } = JSON.parse(data);
     const [request, { order_id }] = createPaymentRequest(price, {

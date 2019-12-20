@@ -18,10 +18,7 @@ export default {
       
       await db.beginTransaction();
 
-      const [{ insertId }] = await db.query(
-        `SELECT create_course_delivery_instance(${templateId}, ${user.id}, ${startDate}, ${enrollmentEndDate}, ${price}) insertId`,
-        [templateId, user.id, startDate, enrollmentEndDate, price]
-      );
+      const [{ insertId }] = await db.query(`SELECT create_course_delivery_instance(${templateId}, ${user.id}, ${startDate}, ${enrollmentEndDate}, ${price}) insertId`);
 
       await assignInstructors(db, insertId, instructorKeys);
 

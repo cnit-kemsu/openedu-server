@@ -12,7 +12,7 @@ export default {
   async resolve(obj, { id, role }, { user, db }) {
     verifyAdminRole(user, db);
 
-    const { affectedRows } = await db.query(`UPDATE users SET role = ? WHERE ${roleFilter} AND id = ?`, [role, id])
+    const { affectedRows } = await db.query(`UPDATE users SET role = ${role} WHERE ${roleFilter} AND id = ${id}`)
     return affectedRows;
   }
 };

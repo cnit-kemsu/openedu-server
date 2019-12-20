@@ -17,9 +17,9 @@ export default {
     const passkey = generatePasskey(email);
     try {
 
-      const { insertId: userId } = await db.query(`INSERT INTO users (role, email) values (?, ?)`, [role, email]);
+      const { insertId: userId } = await db.query(`INSERT INTO users (role, email) values (${role}, ${email})`);
 
-      db.query(`INSERT INTO unverified_accounts (user_id, passkey) values (?, ?)`, [userId, passkey]);
+      db.query(`INSERT INTO unverified_accounts (user_id, passkey) values (${userId}, ${passkey})`);
 
       sendEmail(
         email,

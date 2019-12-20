@@ -19,7 +19,7 @@ export default {
 
       await db.beginTransaction();
       
-      const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs);
+      const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs, { db });
       const { insertId } = await db.query(`INSERT INTO course_design_units SET ${assignmentList}`);
 
       await db.commit();

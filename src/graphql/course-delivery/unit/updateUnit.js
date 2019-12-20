@@ -19,12 +19,12 @@ export default {
 
       await db.beginTransaction();
 
-      const [assignmentList, params] = await sqlBuilder.buildAssignmentList(inputArgs, { isUpdateClause: true, db });
+      const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs, { db });
       if (assignmentList === '') {
         await db.rollback();
         return 0;
       }
-      const { affectedRows } = await db.query(`UPDATE course_delivery_units SET ${assignmentList} WHERE id = ?`, [...params, id]);
+      const { affectedRows } = await db.query(`UPDATE course_delivery_units SET ${assignmentList} WHERE id = ${id}`);
       
       await db.commit();
       return affectedRows;

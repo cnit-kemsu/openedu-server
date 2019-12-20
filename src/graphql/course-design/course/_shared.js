@@ -14,7 +14,7 @@ const selectExprListBuilder = {
   sections: ['id']
 };
 
-const pattern = word =>  `%${word}%`;
+const pattern = word => `%${word}%`;
 function searchWord(word) {
   return escapePattern(word, pattern)
   |> `(_name LIKE ${#})`;

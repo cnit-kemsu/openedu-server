@@ -11,8 +11,7 @@ export default {
     verifySignedIn(user);
 
     const [attempt] = await db.query(
-      'SELECT get_value(data_value_id) quiz, start_date startDate, replies_count repliesCount, feedback FROM quiz_attempts WHERE user_id = ? AND unit_id = ?',
-      [user.id, unitId]
+      `SELECT get_value(data_value_id) quiz, start_date startDate, replies_count repliesCount, feedback FROM quiz_attempts WHERE user_id = ${user.id} AND unit_id = ${unitId}`
     );
     if (attempt === undefined) throw new GraphQLError("Quiz attempt has not yet been started");
 
@@ -66,7 +65,7 @@ export default {
 
     try {
 
-      await db.query('CALL submit_quiz_reply(?, ?, ?, ?, ?)', [user.id, unitId, JSON.stringify(reply), score, JSON.stringify(feedback)]);
+      await db.query(`CALL submit_quiz_reply(${user.id}, ${unitId}, ${JSON.stringify(reply)}, ${score}, ${JSON.stringify(feedback)})`);
 
     } catch (error) {
 

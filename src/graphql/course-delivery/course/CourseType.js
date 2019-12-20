@@ -34,7 +34,7 @@ export default _.Object({
       type: _.JSON,
       resolve: ({ picture }) => resolveJSON(picture)
     },
-    enrolled: { type: _.Boolean },
+    isEnrolledToCourse: { type: _.Boolean },
 
     sections: {
       type: _.List(_.NonNull(SectionType)),
@@ -47,7 +47,14 @@ export default _.Object({
     instructors: {
       type: _.List(UserType),
       resolve({ id }, {}, { loaders }, { fields }) {
-        return loaders.instructors_byCourseId.load(id, fields);
+        return loaders.user_instructor_byCourseId.load(id, fields);
+      }
+    } |> upgradeResolveFn,
+
+    students: {
+      type: _.List(UserType),
+      resolve({ id }, {}, { loaders }, { fields }) {
+        return loaders.user_student_byCourseId.load(id, fields);
       }
     } |> upgradeResolveFn,
 

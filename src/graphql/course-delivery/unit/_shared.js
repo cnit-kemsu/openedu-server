@@ -1,48 +1,38 @@
-import { SQLBuilder } from '@kemsu/graphql-server';
+import { SQLBuilder, escape, jsonToString } from '@kemsu/graphql-server';
 import { insertFilesOfValue } from '@lib/insertFilesOfValue';
 
-const aliases = {
+const selectExprListBuilder = {
   name: '_name',
   type: '_type',
   subsectionId: 'subsection_id',
-  indexNumber: 'index_number'
-};
-
-const selectExprListBuilder = {
-  ...aliases,
+  sequenceNumber: 'sequence_number',
 
   summary: 'get_value(summary_value_id)',
   data: 'get_value(data_value_id)',
-  hasAttempt({ userId, unitId }) {
-    return ['(SELECT 1 FROM quiz_attempts WHERE user_id = ? AND unit_id = ?)', userId, unitId];
-  },
 
-  subsection: { subsectionId: 'subsection_id' }
+  subsection: ['subsection_id'],
+
+  hasAttempt({ user, unitId }) {
+    return [`(SELECT 1 FROM quiz_attempts WHERE user_id = ${user.id} AND unit_id = ${unitId})`];
+  },
 };
 
 const whereConditionBuilder = {
-  keys(keyArray) {
-    return `id IN (${keyArray})`;
-  },
-  subsectionKeys(keyArray) {
-    return `subsection_id IN (${keyArray})`;
-  }
+  keys: values => `id IN (${values.join(', ')})`,
+  subsectionKeys: values => `subsection_id IN (${values.join(', ')})`
 };
 
 const assignmentListBuilder = {
-  ...aliases,
-  summary(value, { isUpdateClause }) {
-    return isUpdateClause
-    ? ['summary_value_id = update_value(summary_value_id, ?, NULL)', value]
-    : ['summary_value_id = create_value(?, NULL)', value];
-  },
-  async data(value, { db, isUpdateClause }) {
+  name: value => `_name = ${escape(value)}`,
+  type: value => `_type = ${escape(value)}`,
+  subsectionId: value => `subsection_id = ${value}`,
+
+  summary: value => `summary_value_id = set_value(summary_value_id, ${escape(value)}, NULL)`,
+  async data(value, { db }) {
+    if (value !== null && !value.timeLimit) delete value.timeLimit;
     const fileIdArray = await insertFilesOfValue(db, value);
-    if (!value.timeLimit) delete value.timeLimit;
-    return isUpdateClause
-    ? [`data_value_id = update_value(data_value_id, ?, '${fileIdArray}')`, value]
-    : [`data_value_id = create_value(?, '${fileIdArray}')`, JSON.stringify(value)];
-  },
+    return `data_value_id = set_value(data_value_id, ${jsonToString(value)}, ${fileIdArray})`;
+  }
 };
 
 export const sqlBuilder = new SQLBuilder(

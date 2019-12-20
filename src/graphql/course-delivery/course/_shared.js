@@ -16,10 +16,10 @@ const selectExprListBuilder = {
   sections: ['id'],
   instructors: ['id'],
 
-  enrolled: ({ user, enrolledFilterPassed }) => user != null ? null : (enrolledFilterPassed ? '1' : `is_enrolled_to_course(${user.id}, id)`)
+  isEnrolledToCourse: ({ user, enrolledFilterPassed }) => user != null ? null : (enrolledFilterPassed ? 'TRUE' : `is_enrolled_to_course(${user.id}, id)`)
 };
 
-const pattern = word =>  `%${word}%`;
+const pattern = word => `%${word}%`;
 function searchWord(word) {
   return escapePattern(word, pattern)
   |> `(_name LIKE ${#})`;

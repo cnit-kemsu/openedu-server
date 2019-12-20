@@ -11,7 +11,7 @@ export default {
 
     try {
 
-      await db.query('CALL create_quiz_attempt(?, ?)', [user.id, unitId]);
+      await db.query(`CALL create_quiz_attempt(${user.id}, ${unitId})`);
 
     } catch (error) {
 

@@ -21,6 +21,7 @@ const whereConditionBuilder = {
 const assignmentListBuilder = {
   name: value => `_name = ${escape(value)}`,
   sectionId: value => `section_id = ${value}`,
+  
   accessPeriod: value => `access_period = ${value ? value : null}`,
   expirationPeriod: value => `expiration_period = ${value ? value : null}`,
   

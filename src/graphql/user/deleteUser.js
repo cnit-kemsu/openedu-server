@@ -1,6 +1,5 @@
 import { types as _ } from '@kemsu/graphql-server';
 import { verifyAdminRole } from '@lib/authorization';
-import { roleFilter } from './_shared';
 
 export default {
   type: _.NonNull(_.Int),
@@ -10,7 +9,7 @@ export default {
   async resolve(obj, { id }, { user, db }) {
     verifyAdminRole(user, db);
 
-    const { affectedRows } = await db.query(`DELETE FROM users WHERE ${roleFilter} AND id = ?`, id);
+    const { affectedRows } = await db.query(`DELETE FROM users id = ${id}`);
     return affectedRows;
   }
 };

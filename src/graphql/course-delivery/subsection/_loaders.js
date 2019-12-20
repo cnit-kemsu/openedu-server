@@ -2,18 +2,16 @@ import { sqlBuilder } from './_shared';
 
 function byId(keys, { db }, fields) {
 
-  fields.id = null;
-  const [selectExprList] = sqlBuilder.buildSelectExprList(fields);
-  const [whereClause, params] = sqlBuilder.buildWhereClause({ keys });
-  return db.query(`SELECT ${selectExprList} FROM course_delivery_subsections ${whereClause}`, params);
+  const selectExprList = sqlBuilder.buildSelectExprList({ ...fields, id: null });
+  const whereClause = sqlBuilder.buildWhereClause({ keys });
+  return db.query(`SELECT ${selectExprList} FROM course_delivery_subsections ${whereClause}`);
 }
 
 function bySectionId(sectionKeys, { db }, fields) {
 
-  fields.sectionId = null;
-  const [selectExprList] = sqlBuilder.buildSelectExprList(fields);
-  const [whereClause, params] = sqlBuilder.buildWhereClause({ sectionKeys });
-  return db.query(`SELECT ${selectExprList} FROM course_delivery_subsections ${whereClause}`, params);
+  const selectExprList = sqlBuilder.buildSelectExprList({ ...fields, sectionId: null });
+  const whereClause = sqlBuilder.buildWhereClause({ sectionKeys });
+  return db.query(`SELECT ${selectExprList} FROM course_delivery_subsections ${whereClause}`);
 }
 
 export default {

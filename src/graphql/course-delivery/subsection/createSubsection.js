@@ -16,8 +16,8 @@ export default {
 
     try {
       
-      const [assignmentList, params] = await sqlBuilder.buildAssignmentList(inputArgs, { isUpdateClause: false });
-      const { insertId } = await db.query(`INSERT INTO course_delivery_subsections SET ${assignmentList}`, [...params]);
+      const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs);
+      const { insertId } = await db.query(`INSERT INTO course_delivery_subsections SET ${assignmentList}`);
       return insertId;
 
     } catch(error) {
