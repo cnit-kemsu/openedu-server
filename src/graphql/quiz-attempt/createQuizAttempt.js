@@ -7,7 +7,8 @@ export default {
     unitId: { type: _.NonNull(_.Int) }
   },
   async resolve(obj, { unitId }, { db, user }) {
-    verifySignedIn(user);
+    const _user = await verifySignedIn(user);
+    await _user.verifyCanCreateQuizAttempt(unitId);
 
     try {
 
@@ -22,7 +23,10 @@ export default {
 
       throw error;
       
+    } finally {
+      _user.quizAttempts.push({  });
     }
+
     return 1;
   }
 };

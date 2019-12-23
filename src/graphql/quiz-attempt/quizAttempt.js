@@ -8,16 +8,7 @@ export default {
   },
   async resolve(obj, { unitId }, { user, db }, { fields }) {
     
-    verifySignedIn(user);
-    const [attempt] = await db.query(`
-      SELECT start_date startDate, last_submitted_reply lastSubmittedReply, replies_count repliesCount, score, feedback
-      FROM quiz_attempts
-      WHERE user_id = ${user.id} AND unit_id = ${unitId};
-    `);
-
-    if (!attempt) return attempt;
-    if (attempt.lastSubmittedReply) attempt.lastSubmittedReply = JSON.parse(attempt.lastSubmittedReply);
-    if (attempt.feedback) attempt.feedback = JSON.parse(attempt.feedback);
-    return attempt;
+    const _user = await verifySignedIn(user);
+    return _user.getQuizAttempt(unitId);
   }
 } |> upgradeResolveFn;

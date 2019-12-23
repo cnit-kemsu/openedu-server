@@ -12,7 +12,7 @@ import courseLoaders from './course/_loaders';
 
 import courseDeliveryInstanceUserProgress from './course/courseDeliveryInstanceUserProgress';
 import courseDeliveryStudents from './course/courseDeliveryStudents';
-import enrollToCourseDeliveryInstance from './course/enrollToCourseDeliveryInstance';
+import enrollToCourse from './course/enrollToCourse';
 
 import createCourseDeliverySection from './section/createSection';
 import updateCourseDeliverySection from './section/updateSection';
@@ -64,7 +64,7 @@ export default {
     deleteCourseDeliveryUnit,
     moveCourseDeliveryUnit,
 
-    enrollToCourseDeliveryInstance
+    enrollToCourse
   },
   loaders: {
     courseDelivery_instance_byId: new Loader(courseLoaders.byId, collation.find('id')),

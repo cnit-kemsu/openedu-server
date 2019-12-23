@@ -22,10 +22,14 @@ class Subsection extends CachedValue {
     this.expirationDate = entry.expirationDate;
     this.courseId = entry.courseId;
   }
+
+  isAccessOpen() {
+    return this.accessDate >= new Date();
+  }
 }
 
 export async function getSubsection(id, db) {
-  let subsection = subsections.find(s => s.id === id);
+  let subsection = subsections.find(_subsection => _subsection.id === id);
 
   if (subsection === undefined) {
     subsection = new Subsection(id, db);

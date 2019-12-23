@@ -1,5 +1,5 @@
 import { types as _, ClientInfo, GraphQLError } from '@kemsu/graphql-server';
-import { verifyUserRole } from '@lib/authorization';
+import { verifySignedIn, getCourse } from '@lib/authorization';
 import { createPaymentRequest } from '@lib/createPaymentRequest';
 
 export default {
@@ -8,16 +8,13 @@ export default {
     courseId: { type: _.NonNull(_.Int) }
   },
   async resolve(obj, { courseId }, { db, user }) {
-    const role = await verifyUserRole(user, db);
-    if (role !== 'student') throw new GraphQLError("Only students can pay for a course", ClientInfo.UNMET_CONSTRAINT);
+    const _user = await verifySignedIn(user);
+    await _user.verifyCanEnrollToCourse(courseId);
 
-    const [purchase] = await db.query(`SELECT id FROM paid_course_purchases WHERE user_id = ${user.id} AND course_id = ${courseId} AND callback_status != 'failed'`);
-    if (purchase) throw new GraphQLError("You've already paid for this course", ClientInfo.UNMET_CONSTRAINT);
+    const { email, data } = _user;
+    const { price, name, creationDate } = await getCourse(courseId);
 
-    const [{ email, data }] = await db.query(`SELECT email, _data data FROM users WHERE id = ${user.id}`, user.id);
-    const [{ price, name, creationDate }] = await db.query(`SELECT price, _name name, creation_date creationDate FROM course_delivery_instances WHERE id = ${courseId}`);
-
-    const { lastname, firstname, middlename } = JSON.parse(data);
+    const { lastname, firstname, middlename } = data;
     const [request, { order_id }] = createPaymentRequest(price, {
       user: {
         id: user.id,
@@ -34,7 +31,7 @@ export default {
       }
     });
 
-    await db.query('INSERT INTO paid_course_purchases SET order_id = ?, user_id = ?, course_id = ?', [order_id, user.id, courseId]);
+    await db.query(`INSERT INTO paid_course_purchases SET order_id = ${order_id}, user_id = ${user.id}, course_id = ${courseId}`);
 
     return request;
   }
