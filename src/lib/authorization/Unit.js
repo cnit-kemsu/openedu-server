@@ -1,40 +1,29 @@
-import CachedValue from './CachedValue';
-import { getSubsection } from './Subsection';
-
-const units = [];
+import { CachedValue, Cache } from './Caching';
 
 class Unit extends CachedValue {
 
-  constructor(id, db) {
-    super(db);
-    this.id = id;
-  }
-
-  async _obtain(db) {
-    const [entry] = await db.query(`
+  async resolve(db) {
+    await db.query(`
       SELECT
         subsection_id AS subsectionId,
-        _type AS type
+        _type AS type,
+        IF(_type = 'quiz', get_value(data_value_id), NULL) data
       FROM course_delivery_units
       WHERE id = ${this.id}
-    `);
-    this.subsectionId = entry.subsectionId;
-    this.type = entry.type;
+    `) |> Object.assign(this, #);
+    if (this.data !== null) this.data = JSON.parse(this.data);
   }
 
-  async isAccessOpen() {
-    const subsection = await getSubsection(this.subsectionId);
-    return subsection.accessDate >= new Date();
+  async getSubsection() {
+    if (this._subsection === undefined)
+      this._subsection = await Cache.find('subsections', this.subsectionId);
+    return this._subsection;
+  }
+
+  async isAccessible() {
+    return await this.getSubsection()
+    |> #.accessDate >= new Date();
   }
 }
 
-export async function getUnit(id, db) {
-  let unit = units.find(_unit => _unit.id === id);
-
-  if (unit === undefined) {
-    unit = new Unit(id, db);
-    units.push(unit);
-  }
-
-  return await unit?.obtain();
-}
+Cache.createCachedValues('units', Unit);

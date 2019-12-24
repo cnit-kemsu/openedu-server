@@ -1,40 +1,31 @@
-import CachedValue from './CachedValue';
-
-const subsections = [];
+import { CachedValue, Cache } from './Caching';
 
 class Subsection extends CachedValue {
 
-  constructor(id, db) {
-    super(db);
-    this.id = id;
-  }
-
-  async _obtain(db) {
-    const [entry] = await db.query(`
+  async resolve(db) {
+    await db.query(`
       SELECT
         access_date AS accessDate,
         expiration_date AS expirationDate,
         (SELECT course_id FROM course_delivery_sections WHERE id = section_id) AS courseId
       FROM course_delivery_subsections
       WHERE id = ${this.id}
-    `);
-    this.accessDate = entry.accessDate;
-    this.expirationDate = entry.expirationDate;
-    this.courseId = entry.courseId;
+    `) |> Object.assign(this, #);
   }
 
-  isAccessOpen() {
+  async getCourse() {
+    if (this._course === undefined)
+      this._course = await Cache.find('courses', this.courseId);
+    return this._course;
+  }
+
+  isAccessible() {
     return this.accessDate >= new Date();
   }
-}
 
-export async function getSubsection(id, db) {
-  let subsection = subsections.find(_subsection => _subsection.id === id);
-
-  if (subsection === undefined) {
-    subsection = new Subsection(id, db);
-    subsections.push(subsection);
+  isExpired() {
+    return this.expirationDate < new Date();
   }
-
-  return await subsection?.obtain();
 }
+
+Cache.createCachedValues('subsections', Subsection);

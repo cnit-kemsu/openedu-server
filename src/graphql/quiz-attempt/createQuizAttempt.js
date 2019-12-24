@@ -1,4 +1,4 @@
-import { types as _, GraphQLError } from '@kemsu/graphql-server';
+import { types as _, GraphQLError, dateToString } from '@kemsu/graphql-server';
 import { verifySignedIn } from '@lib/authorization';
 
 export default {
@@ -10,23 +10,19 @@ export default {
     const _user = await verifySignedIn(user);
     await _user.verifyCanCreateQuizAttempt(unitId);
 
+    const startDate = new Date();
+    let dataValueId;
+
     try {
 
-      await db.query(`CALL create_quiz_attempt(${user.id}, ${unitId})`);
+      dataValueId = await db.query(`SELECT create_quiz_attempt(${user.id}, ${unitId}, ${dateToString(startDate)}) dataValueId`)
+      |> #[0].dataValueId;
 
     } catch (error) {
-
-      if (error.rootCause?.message === 'invalid role') throw new GraphQLError(`User with role '${user.role}' cannot create quiz attempt. Only users with role 'student' are able to create quiz attempt`);
-      if (error.rootCause?.message === 'not enrolled') throw new GraphQLError("You are not enrolled in the course containing the quiz");
-      if (error.rootCause?.message === 'access closed') throw new GraphQLError("Access to the subsection containing the quiz has not yet been opened");
-      if (error.rootCause?.message === 'access expired') throw new GraphQLError("Access to the subsection containing the quiz has expired");
-
       throw error;
-      
-    } finally {
-      _user.quizAttempts.push({  });
     }
 
+    _user.quizAttempts.push({ unitId, dataValueId, startDate, repliesCount: 0 });
     return 1;
   }
 };

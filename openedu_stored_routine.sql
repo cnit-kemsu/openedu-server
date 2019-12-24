@@ -606,15 +606,12 @@ BEGIN
 	IF NOT v_has_access THEN CALL _throw_error('not enrolled'); END IF;
 END;
 
-CREATE OR REPLACE PROCEDURE create_quiz_attempt(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED)
+CREATE OR REPLACE FUNCTION create_quiz_attempt(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED, p_date DATETIME) RETURNS INT UNSIGNED
 BEGIN
-  DECLARE v_data_value_id INT UNSIGNED;
-  
-  CALL _check_user_ability_to_perform_quiz(p_user_id, p_unit_id);
-  
-  SET v_data_value_id = (SELECT data_value_id FROM course_delivery_units WHERE id = p_unit_id);
+  DECLARE v_data_value_id INT UNSIGNED DEFAULT (SELECT data_value_id FROM course_delivery_units WHERE id = p_unit_id);
   SELECT _increase_value_total_attachments(v_data_value_id);
-  INSERT INTO quiz_attempts (user_id, unit_id, data_value_id, start_date) VALUES (p_user_id, p_unit_id, v_data_value_id, NOW());
+  INSERT INTO quiz_attempts (user_id, unit_id, data_value_id, start_date) VALUES (p_user_id, p_unit_id, v_data_value_id, p_date);
+  RETURN data_value_id;
 END;
 
 CREATE OR REPLACE PROCEDURE submit_quiz_reply(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED, p_reply LONGTEXT, p_score SMALLINT UNSIGNED, p_feedback LONGTEXT)

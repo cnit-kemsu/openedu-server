@@ -1,5 +1,5 @@
 import { types as _ } from '@kemsu/graphql-server';
-import { verifyAdminRole } from '@lib/authorization';
+import { findAdmin } from '@lib/authorization';
 import { assignInstructors } from '@lib/assignInstructors';
 
 export default {
@@ -12,7 +12,7 @@ export default {
     instructorKeys: { type: _.List(_.NonNull(_.Int)) }
   },
   async resolve(obj, { templateId, startDate = null, enrollmentEndDate = null, price = null, instructorKeys }, { user, db }) {
-    await verifyAdminRole(user, db);
+    await findAdmin(user, db);
 
     try {
       
