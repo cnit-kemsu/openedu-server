@@ -1,7 +1,9 @@
 import { types as _, SQLBuilder, escape, escapePattern, jsonToString } from '@kemsu/graphql-server';
 import { insertFilesOfValue } from '@lib/insertFilesOfValue';
+import { findUser } from '@lib/authorization';
 
 const selectExprListBuilder = {
+  id: 'id',
   name: '_name',
   creatorId: 'creator_id',
   startDate: 'start_date',
@@ -14,9 +16,7 @@ const selectExprListBuilder = {
   picture: 'get_value(picture_value_id)',
 
   sections: ['id'],
-  instructors: ['id'],
-
-  isEnrolledToCourse: ({ user, enrolledFilterPassed }) => user != null ? null : (enrolledFilterPassed ? 'TRUE' : `is_enrolled_to_course(${user.id}, id)`)
+  instructors: ['id']
 };
 
 const pattern = word => `%${word}%`;
@@ -32,8 +32,12 @@ const whereConditionBuilder = {
     .split(' ')
     .map(searchWord)
     .join(' AND '),
-  currentUserEnrolled: (value, { user }) => (value == null || user == null) ? null : `FIND_IN_SET(id, get_user_courses(${user.id}))`,
-  availableToEnroll: value => value == null ? null : `available_to_enroll = TRUE`
+  async currentUserEnrolled(value, { userId, db }) {
+    if (value !== true || userId == null) return null;
+    const user = await findUser(userId, db);
+    return `id IN (${user.courseKeys.join(', ')})`;
+  },
+  availableToEnroll: value => value == null ? null : `available_to_enroll = ${value}`
 };
 
 const assignmentListBuilder = {

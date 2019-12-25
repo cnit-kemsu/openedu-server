@@ -11,8 +11,8 @@ export default {
     accessPeriod: { type: _.Int },
     expirationPeriod: { type: _.Int }
   },
-  async resolve(obj, { id, ...inputArgs }, { user, db }) {
-    await verifyAdminRole(user, db);
+  async resolve(obj, { id, ...inputArgs }, { userId, db }) {
+    await verifyAdminRole(userId, db);
 
     try {
 

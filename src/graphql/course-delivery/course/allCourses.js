@@ -9,10 +9,10 @@ export default {
     offset: { type: _.Int },
     ...searchArgs,
   },
-  async resolve(obj, { limit = 10, offset = 0, ...search }, { user, db }, { fields }) {
+  async resolve(obj, { limit = 10, offset = 0, ...search }, { userId, db }, { fields }) {
 
-    const selectExprList = sqlBuilder.buildSelectExprList(fields, { user, enrolledFilterPassed: search.currentUserEnrolled === true });
-    const whereClause = sqlBuilder.buildWhereClause(search, ['defunct = 0'], { user });
+    const selectExprList = sqlBuilder.buildSelectExprList(fields);
+    const whereClause = await sqlBuilder.buildWhereClause(search, ['defunct = 0'], { userId, db });
     return await db.query(`SELECT ${selectExprList} FROM course_delivery_instances ${whereClause} LIMIT ${limit} OFFSET ${offset}`);
   }
 } |> upgradeResolveFn;

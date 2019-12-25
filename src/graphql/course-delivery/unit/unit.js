@@ -1,5 +1,5 @@
-import { types as _, upgradeResolveFn, GraphQLError } from '@kemsu/graphql-server';
-import { verifySignedIn } from '@lib/authorization';
+import { types as _, upgradeResolveFn, GraphQLError, ClientInfo } from '@kemsu/graphql-server';
+import { findUser, findUnit } from '@lib/authorization';
 import UnitType from './UnitType';
 import { sqlBuilder } from './_shared';
 
@@ -8,17 +8,31 @@ export default {
   args: {
     id: { type: _.NonNull(_.Int) }
   },
-  async resolve(obj, { id }, { user, db }, { fields }) {
+  async resolve(obj, { id }, { userId, db }, { fields }) {
     
-    const _user = await verifySignedIn(user);
-    await _user.verifyHasAccessToUnit(id);
+    const user = await findUser(userId, db);
+    let unit;
+    if (user.role !== 'superuser' && user.role !== 'admin') {
 
-    if (_user.role === 'student') {
-      fields.type = null;
-      fields.hasAttempt = null;
+      unit = await findUnit(id);
+      if (!user.hasCourseKey(await unit.getSubsection().courseId)) {
+        if (user.role === 'student') throw new GraphQLError(`You are not enrolled in the course containing the unit`, ClientInfo.UNMET_CONSTRAINT);
+        else if (user.role === 'instructor') throw new GraphQLError(`You are not assigned as an instructor to the course containing the unit`, ClientInfo.UNMET_CONSTRAINT);
+      }
+      if (user.role === 'student' && await !unit.isAccessible()) throw new GraphQLError(`Access to the subsection containing the unit has not yet been opened`, ClientInfo.UNMET_CONSTRAINT);
+
+      delete fields.id;
+      delete fields.type;
+      delete fields.subsectionId;
+      delete fields.subsection;
     }
-    const selectExprList = sqlBuilder.buildSelectExprList(fields, { user, unitId: id });
+    
+    const selectExprList = sqlBuilder.buildSelectExprList(fields, { userId, unitId: id });
+    if (selectExprList === '*') return { id };
     return await db.query(`SELECT ${selectExprList} FROM course_delivery_units WHERE id = ${id}`)
-    |> #[0];
+    |> {
+      ...unit,
+      ...#[0]
+    };
   }
 } |> upgradeResolveFn;

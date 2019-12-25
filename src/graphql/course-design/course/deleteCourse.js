@@ -6,8 +6,8 @@ export default {
   args: {
     id: { type: _.NonNull(_.Int) }
   },
-  async resolve(obj, { id }, { user, db }) {
-    await verifySuperuserRole(user, db);
+  async resolve(obj, { id }, { userId, db }) {
+    await verifySuperuserRole(userId, db);
 
     const { affectedRows } = await db.query(`DELETE FROM course_design_templates WHERE id = ${id}`);
     return affectedRows;

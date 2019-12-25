@@ -1,14 +1,14 @@
 import { types as _, upgradeResolveFn } from '@kemsu/graphql-server';
-import { verifySignedIn } from '@lib/authorization';
+import { findUser } from '@lib/authorization';
 
 export default {
   type: _.JSON,
   args: {
     unitId: { type: _.NonNull(_.Int) }
   },
-  async resolve(obj, { unitId }, { user, db }, { fields }) {
+  async resolve(obj, { unitId }, { userId, db }, { fields }) {
     
-    const _user = await verifySignedIn(user);
-    return _user.getQuizAttempt(unitId);
+    const user = await findUser(userId, db);
+    return user.getQuizAttempt(unitId);
   }
 } |> upgradeResolveFn;

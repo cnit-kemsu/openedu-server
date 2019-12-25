@@ -8,8 +8,8 @@ export default {
   args: {
     id: { type: _.NonNull(_.Int) }
   },
-  async resolve(obj, { id }, { user, db }, { fields }) {
-    await verifyAdminRole(user, db);
+  async resolve(obj, { id }, { userId, db }, { fields }) {
+    await verifyAdminRole(userId, db);
 
     const selectExprList = sqlBuilder.buildSelectExprList(fields);
     return await db.query(`SELECT ${selectExprList} FROM course_design_units WHERE id = ${id}`)

@@ -1,4 +1,3 @@
-import { GraphQLError, ClientInfo } from '@kemsu/graphql-server';
 import { CachedValue, Cache } from './Caching';
 
 function finalizeAttempt(a) {
@@ -10,100 +9,57 @@ class User extends CachedValue {
 
   async resolve(db) {
 
-    const [user] = db.query(`SELECT role, email, _data AS data FROM users WHERE id = ${this.id}`);
+    const [user] = db.query(`SELECT role, email, _data AS data FROM users WHERE id = ${this.key}`);
     if (user === undefined) return;
-    Object.assign(this, user);
-    if (this.data !== null) this.data = JSON.parse(this.data);
+    if (user.data !== null) user.data = JSON.parse(user.data);
 
     let courses;
-    if (this.role === 'student') {
+    if (user.role === 'student') {
 
       courses = await db.query(`
-        SELECT course_id key FROM free_course_enrollments WHERE user_id = ${this.id}
+        SELECT course_id key FROM free_course_enrollments WHERE user_id = ${this.key}
         UNION ALL
-        SELECT course_id key FROM paid_course_purchases WHERE user_id = ${this.id} AND callback_status = 'success'
+        SELECT course_id key FROM paid_course_purchases WHERE user_id = ${this.key} AND callback_status = 'success'
       `);
 
-      this.quizAttempts = await db.query(`
-        SELECT unit_id unitId, start_date startDate, last_submitted_reply lastSubmittedReply, replies_count repliesCount, score, feedback FROM quiz_attempts WHERE user_id = ${this.id}
+      user.quizAttempts = await db.query(`
+        SELECT unit_id unitId, start_date startDate, last_submitted_reply lastSubmittedReply, replies_count repliesCount, score, feedback FROM quiz_attempts WHERE user_id = ${this.key}
       `) |> #?.forEach(finalizeAttempt);
 
-    } else if (this.role === 'instructor' || this.role === 'admin') {
-      courses = await db.query(`SELECT course_id key FROM instructor_assignments WHERE user_id = ${this.id}`);
+    } else if (user.role === 'instructor' || user.role === 'admin') {
+      courses = await db.query(`SELECT course_id key FROM instructor_assignments WHERE user_id = ${this.key}`);
     }
-    if (courses !== undefined) this.courseKeys = courses.map(c => c.key);
+    if (courses !== undefined) user.courseKeys = courses.map(c => c.key);
+    
+    user.id = this.key;
+    return user;
   }
 
   hasCourseKey(courseId) {
-    return this.courseKeys.find(courseId) !== undefined;
-  }
-
-  async hasAccessToSubsection(subsectionId) {
-    if (this.role === 'superuser' || this.role === 'admin') return true;
-    const subsection = await Cache.find('subsection', subsectionId);
-    return this.hasCourseKey(subsection.courseId);
+    return this.courseKeys.includes(courseId);
   }
 
   pushCourseKey(courseId) {
     this.courseKeys.push(courseId);
   }
 
-  async verify_CanEnrollInCourse(courseId) {
-    if (this.role !== 'student') throw new GraphQLError(`User with the role '${this.role}' cannot enroll in a course. Only users with the role 'student' are able to enroll in a course`, ClientInfo.UNMET_CONSTRAINT);
-    if (this.courseKeys.find(courseId) !== undefined) throw new GraphQLError(`You are already enrolled in the course`, ClientInfo.UNMET_CONSTRAINT);
-
-    const course = await Cache.find('courses', courseId);
-    course.verify_AvailableForEnrollment();
-  }
-
-  async verify_HasAccessToSubsection(subsectionId) {
-    if (this.role === 'superuser' || this.role === 'admin') return;
-
-    const subsection = await Cache.find('subsections', subsectionId);
-    const courseId = this.courseKeys.find(subsection.courseId);
-    if (courseId === undefined) {
-      if (this.role === 'student') throw new GraphQLError(`You are not enrolled in the course containing the subsection`);
-      else if (this.role === 'instructor') throw new GraphQLError(`You are not assigned as an instructor to the course containing the subsection`);
-    }
-    if (this.role === 'student' && !subsection.isAccessible) throw new GraphQLError(`Access to the subsection has not yet been opened`);
-  }
-
-  async verify_HasAccessToUnit(unitId) {
-    if (this.role === 'superuser' || this.role === 'admin') return;
-
-    const unit = await units.find(unitId);
-    const subsection = await unit.getSubsection();
-    const courseId = this.courseKeys.find(subsection.courseId);
-    if (courseId === undefined) {
-      if (this.role === 'student') throw new GraphQLError(`You are not enrolled in the course containing the unit`);
-      else if (this.role === 'instructor') throw new GraphQLError(`You are not assigned as an instructor to the course containing the unit`);
-    }
-    if (this.role === 'student' && !subsection.isAccessible) throw new GraphQLError(`Access to the subsection containing the unit has not yet been opened`);
-  }
-
-  async verifyCanCreateQuizAttempt(unitId) {
-    if (this.role !== 'student') throw new GraphQLError(`User with role '${this.role}' cannot create quiz attempt. Only users with role 'student' are able to create quiz attempt`);
-    if (this.quizAttempts.find(a => a.unitId === unitId) !== undefined) throw new GraphQLError(`Attempt to the quiz has already exist`);
-
-    const unit = await units.find(unitId);
-    const subsection = await getSubsection(unit.subsectionId);
-    const courseId = this.courseKeys.find(subsection.courseId);
-    if (courseId === undefined) {
-      if (this.role === 'student') throw new GraphQLError(`You are not enrolled in the course containing the quiz`);
-      else if (this.role === 'instructor') throw new GraphQLError(`You are not assigned as an instructor to the course containing the unit`);
-    }
-    if (!subsection.isAccessOpen) throw new GraphQLError(`Access to the subsection containing the quiz has not yet been opened`);
-    if (subsection.expirationDate < new Date()) throw new GraphQLError("Access to the subsection containing the quiz has expired");
-  }
-
-  async pushQuizAttempt(unitId, dataValueId, startDate) {
-    this.quizAttempts.push({ unitId, dataValueId, startDate, repliesCount: 0 });
+  hasQuizAttempt(unitId) {
+    return this.includes.includes(a => a.unitId === unitId);
   }
 
   getQuizAttempt(unitId) {
-    return this.quizAttempt.find(_attempt => _attempt.unitId === unitId);
+    return this.quizAttempts.find(a => a.unitId === unitId);
+  }
+
+  pushQuizAttempt(unitId, dataValueId, startDate) {
+    this.quizAttempts.push({ unitId, dataValueId, startDate, repliesCount: 0 });
+  }
+
+  updateQuizAttempt(unitId, data) {
+    const attempt = this.getQuizAttempt(unitId);
+    Object.assign(attempt, data)
   }
 
 }
 
-export const users = new CahedValueArray(User);
+Cache.createCachedValues('users', User);

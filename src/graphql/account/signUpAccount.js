@@ -1,4 +1,4 @@
-import { types as _, hashPassword, signBearer, GraphQLError, ClientInfo } from '@kemsu/graphql-server';
+import { types as _, hashPassword, signBearer, GraphQLError, ClientInfo, escape, jsonToString } from '@kemsu/graphql-server';
 import { generatePasskey } from '@lib/generatePasskey';
 import { sendEmail } from '@lib/sendEmail';
 import { jwtSecret, sitename } from '../../config';
@@ -18,12 +18,11 @@ export default {
     const passkey = generatePasskey(email);
     try {
 
-      const { insertId: userId } = await db.query(
-        `INSERT INTO users (role, email, pwdhash, _data) values ('student', ?, ?, ?)`,
-        [email, hashPassword(password), JSON.stringify(data)]
+      const { insertId } = await db.query(
+        `INSERT INTO users (role, email, pwdhash, _data) values ('student', ${escape(email)}, ${hashPassword(password) |> escape}, ${jsonToString(data)})`
       );
 
-      db.query(`INSERT INTO unverified_accounts (user_id, passkey) values (?, ?)`, [userId, passkey]);
+      db.query(`INSERT INTO unverified_accounts (user_id, passkey) values (${insertId}, ${escape(passkey)})`);
 
       sendEmail(
         email,
@@ -34,7 +33,7 @@ export default {
         `
       );
       
-      return signBearer({ id: userId, role: 'student', email, verified: false, complete: true }, jwtSecret);
+      return signBearer({ id: insertId, role: 'student', email, verified: false, complete: true }, jwtSecret);
 
     } catch(error) {
 

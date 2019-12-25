@@ -1,13 +1,14 @@
 import { SQLBuilder } from '@kemsu/graphql-server';
 
 const selectExprListBuilder = {
+  id: 'id',
   name: '_name',
   courseId: 'course_id',
   sequenceNumber: 'sequence_number',
 
   summary: 'get_value(summary_value_id)',
 
-  course: ['course_id'],
+  course: ['courseId'],
   subsections: ['id']
 };
 

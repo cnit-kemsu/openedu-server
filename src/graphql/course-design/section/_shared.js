@@ -7,7 +7,7 @@ const selectExprListBuilder = {
 
   summary: 'get_value(summary_value_id)',
 
-  course: ['course_id'],
+  course: ['courseId'],
   subsections: ['id']
 };
 

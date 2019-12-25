@@ -12,8 +12,8 @@ export default {
     type: { type:  _.NonNull(UnitTypeEnumType) },
     data: { type: _.JSON }
   },
-  async resolve(obj, inputArgs, { user, db }) {
-    await verifyAdminRole(user, db);
+  async resolve(obj, inputArgs, { userId, db }) {
+    await verifyAdminRole(userId, db);
 
     try {
 

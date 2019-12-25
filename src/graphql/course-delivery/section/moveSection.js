@@ -7,8 +7,8 @@ export default {
     movingSectionId: { type: _.NonNull(_.Int) },
     putBeforeSectionId: { type: _.Int }
   },
-  async resolve(obj, { movingSectionId, putBeforeSectionId = null }, { user, db }) {
-    await verifyAdminRole(user, db);
+  async resolve(obj, { movingSectionId, putBeforeSectionId = null }, { userId, db }) {
+    await verifyAdminRole(userId, db);
 
     try {
       await db.query(`CALL move_delivery_over('course_design_section', ${movingSectionId}, ${putBeforeSectionId})`);

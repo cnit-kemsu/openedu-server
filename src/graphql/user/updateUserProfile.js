@@ -11,8 +11,8 @@ export default {
     middlename: { type: _.String },
     picture: { type: _.JSON }
   },
-  async resolve(obj, { firstname, lastname, middlename, picture }, { db, user }) {
-    await verifyUserRole(user, db);
+  async resolve(obj, { firstname, lastname, middlename, picture }, { userId, db }) {
+    await verifyUserRole(userId, db);
 
     const data = { firstname, lastname, middlename };
     try {
@@ -25,7 +25,7 @@ export default {
         return null;
       }
 
-      const { affectedRows } = await db.query(`UPDATE users SET ${assignmentList} WHERE id = ${user.id}`);
+      const { affectedRows } = await db.query(`UPDATE users SET ${assignmentList} WHERE id = ${userId}`);
       await db.commit();
       if (affectedRows === 1) return {
         firstname,

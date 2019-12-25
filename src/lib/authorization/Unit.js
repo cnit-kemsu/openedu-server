@@ -3,15 +3,27 @@ import { CachedValue, Cache } from './Caching';
 class Unit extends CachedValue {
 
   async resolve(db) {
-    await db.query(`
+    const [unit] = await db.query(`
       SELECT
         subsection_id AS subsectionId,
         _type AS type,
         IF(_type = 'quiz', get_value(data_value_id), NULL) data
       FROM course_delivery_units
-      WHERE id = ${this.id}
-    `) |> Object.assign(this, #);
-    if (this.data !== null) this.data = JSON.parse(this.data);
+      WHERE id = ${this.key}
+    `);
+    if (unit === undefined) return;
+    if (unit.data !== null) {
+      unit.data = JSON.parse(unit.data);
+      for (const question of unit.data.questions) {
+        delete question.content;
+        if (question.answerOptions === undefined) continue;
+        for (const option of question.data) {
+          delete option.content;
+        }
+      }
+    }
+    unit.id = this.key;
+    return unit;
   }
 
   async getSubsection() {

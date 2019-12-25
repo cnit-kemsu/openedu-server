@@ -7,11 +7,11 @@ export default {
   args: {
     id: { type: _.NonNull(_.Int) }
   },
-  async resolve(obj, { id }, { user, db }, { fields }) {
+  async resolve(obj, { id }, { userId, db }, { fields }) {
 
-    const selectExprList = sqlBuilder.buildSelectExprList({ ...fields }, { user });
+    const selectExprList = sqlBuilder.buildSelectExprList({ ...fields });
+    if (selectExprList === 'id') return { id };
     const [course] = await db.query(`SELECT ${selectExprList} FROM course_delivery_instances WHERE id = ${id}`);
-        
     return course;
   }
 } |> upgradeResolveFn;

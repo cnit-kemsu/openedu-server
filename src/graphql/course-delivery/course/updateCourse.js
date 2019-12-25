@@ -17,8 +17,8 @@ export default {
     instructorKeys: { type: _.List(_.NonNull(_.Int)) },
     data: { type: _.JSON }
   },
-  async resolve(obj, { id, instructorKeys, ...inputArgs }, { user, db }) {
-    await verifyAdminRole(user, db);
+  async resolve(obj, { id, instructorKeys, ...inputArgs }, { userId, db }) {
+    await verifyAdminRole(userId, db);
 
     try {
       

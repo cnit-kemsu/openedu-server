@@ -11,8 +11,8 @@ export default {
     picture: { type: _.JSON },
     data: { type: _.JSON }
   },
-  async resolve(obj, inputArgs, { user, db }) {
-    await verifyAdminRole(user, db);
+  async resolve(obj, inputArgs, { userId, db }) {
+    await verifyAdminRole(userId, db);
 
     if (inputArgs.data != null) inputArgs.data = JSON.stringify(inputArgs.data);
 

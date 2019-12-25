@@ -12,8 +12,8 @@ export default {
     picture: { type: _.JSON },
     data: { type: _.JSON }
   },
-  async resolve(obj, { id, ...inputArgs }, { user, db }) {
-    await verifyAdminRole(user, db);
+  async resolve(obj, { id, ...inputArgs }, { userId, db }) {
+    await verifyAdminRole(userId, db);
 
     if (inputArgs.data != null) inputArgs.data = JSON.stringify(inputArgs.data);
 
@@ -26,7 +26,7 @@ export default {
         await db.rollback();
         return 0;
       }
-      const { affectedRows } = await db.query(`UPDATE course_design_templates SET ${assignmentList} WHERE id = ${id}`,);
+      const { affectedRows } = await db.query(`UPDATE course_design_templates SET ${assignmentList} WHERE id = ${id}`);
 
       await db.commit();
       return affectedRows;

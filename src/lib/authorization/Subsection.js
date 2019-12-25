@@ -3,14 +3,17 @@ import { CachedValue, Cache } from './Caching';
 class Subsection extends CachedValue {
 
   async resolve(db) {
-    await db.query(`
+    const [subsection] = await db.query(`
       SELECT
         access_date AS accessDate,
         expiration_date AS expirationDate,
         (SELECT course_id FROM course_delivery_sections WHERE id = section_id) AS courseId
       FROM course_delivery_subsections
-      WHERE id = ${this.id}
-    `) |> Object.assign(this, #);
+      WHERE id = ${this.key}
+    `);
+    if (subsection === undefined) return;
+    subsection.id = this.key;
+    return subsection;
   }
 
   async getCourse() {

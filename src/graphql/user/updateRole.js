@@ -9,10 +9,10 @@ export default {
     id: { type: _.NonNull(_.Int) },
     role: { type: _.NonNull(RoleInputEnumType) }
   },
-  async resolve(obj, { id, role }, { user, db }) {
-    verifyAdminRole(user, db);
+  async resolve(obj, { id, role }, { userId, db }) {
+    await verifyAdminRole(userId, db);
 
-    const { affectedRows } = await db.query(`UPDATE users SET role = ${role} WHERE ${roleFilter} AND id = ${id}`)
+    const { affectedRows } = await db.query(`UPDATE users SET role = ${role} WHERE ${roleFilter} AND id = ${id}`);
     return affectedRows;
   }
 };

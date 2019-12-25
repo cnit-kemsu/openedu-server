@@ -11,7 +11,6 @@ import sendSertificate from './course/sendSertificate';
 import courseLoaders from './course/_loaders';
 
 import courseDeliveryInstanceUserProgress from './course/courseDeliveryInstanceUserProgress';
-import courseDeliveryStudents from './course/courseDeliveryStudents';
 import enrollInCourse from './course/enrollInCourse';
 
 import createCourseDeliverySection from './section/createSection';
@@ -41,8 +40,7 @@ export default {
     courseDeliverySubsection,
     courseDeliveryUnit,
 
-    courseDeliveryInstanceUserProgress,
-    courseDeliveryStudents
+    courseDeliveryInstanceUserProgress
   },
   mutation: {
     createCourseDeliveryInstance,

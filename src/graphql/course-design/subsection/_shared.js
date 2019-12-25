@@ -9,7 +9,7 @@ const selectExprListBuilder = {
 
   summary: 'get_value(summary_value_id)',
 
-  section: ['section_id'],
+  section: ['sectionId'],
   units: ['id']
 };
 

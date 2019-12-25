@@ -1,5 +1,5 @@
 import { types as _ } from '@kemsu/graphql-server';
-import { findAdmin } from '@lib/authorization';
+import { verifyAdminRole } from '@lib/authorization';
 import { assignInstructors } from '@lib/assignInstructors';
 
 export default {
@@ -11,14 +11,14 @@ export default {
     price: { type: _.Float },
     instructorKeys: { type: _.List(_.NonNull(_.Int)) }
   },
-  async resolve(obj, { templateId, startDate = null, enrollmentEndDate = null, price = null, instructorKeys }, { user, db }) {
-    await findAdmin(user, db);
+  async resolve(obj, { templateId, startDate = null, enrollmentEndDate = null, price = null, instructorKeys }, { userId, db }) {
+    await verifyAdminRole(userId, db);
 
     try {
       
       await db.beginTransaction();
 
-      const [{ insertId }] = await db.query(`SELECT create_course_delivery_instance(${templateId}, ${user.id}, ${startDate}, ${enrollmentEndDate}, ${price}) insertId`);
+      const [{ insertId }] = await db.query(`SELECT create_course_delivery_instance(${templateId}, ${userId}, ${startDate}, ${enrollmentEndDate}, ${price}) insertId`);
 
       await assignInstructors(db, insertId, instructorKeys);
 

@@ -7,8 +7,8 @@ export default {
     movingUnitId: { type: _.NonNull(_.Int) },
     putBeforeUnitId: { type: _.Int }
   },
-  async resolve(obj, { movingUnitId, putBeforeUnitId = null }, { user, db }) {
-    await verifyAdminRole(user, db);
+  async resolve(obj, { movingUnitId, putBeforeUnitId = null }, { userId, db }) {
+    await verifyAdminRole(userId, db);
 
     try {
       await db.query(`CALL move_entry_over('course_design_unit', ${movingUnitId}, ${putBeforeUnitId})`);

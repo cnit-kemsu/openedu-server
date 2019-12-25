@@ -1,5 +1,6 @@
 import { types as _, resolveJSON, upgradeResolveFn } from '@kemsu/graphql-server';
 import { resolveDate } from '@lib/resolvers';
+import { findUser } from '@lib/authorization';
 import { sortBySequenceNumber } from '@lib/sortBySequenceNumber';
 import SectionType from '../section/SectionType';
 import UserType from '../../user/UserType';
@@ -61,6 +62,14 @@ export default _.Object({
     data: {
       type: _.JSON,
       resolve: ({ data }) => resolveJSON(data)
+    },
+
+    isCurrentUserEnrolled: {
+      type: _.Boolean,
+      async resolve({ id }, {}, { userId, db }) {
+        const user = await findUser(userId, db);
+        return user.hasCourseKey(id);
+      }
     }
 
   }

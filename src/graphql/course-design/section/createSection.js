@@ -9,8 +9,8 @@ export default {
     name: { type: _.NonNull(_.String) },
     summary: { type: _.String }
   },
-  async resolve(obj, inputArgs, { user, db }) {
-    await verifyAdminRole(user, db);
+  async resolve(obj, inputArgs, { userId, db }) {
+    await verifyAdminRole(userId, db);
 
     try {
       

@@ -20,6 +20,12 @@ export async function findSubsection(id, db) {
   return subsection;
 }
 
+export async function findUnit(id, db) {
+  const unit = await Cache.find('units', id, db);
+  if (unit === undefined) throw new GraphQLError(`Invalid unit key`, ClientInfo.PERMISSION_DENIED);
+  return unit;
+}
+
 export async function verifySuperuserRole(id, db) {
   const user = await findUser(id, db);
   if (user.role !== 'superuser') throw new GraphQLError(`You do not have permission to perform the action`, ClientInfo.PERMISSION_DENIED);

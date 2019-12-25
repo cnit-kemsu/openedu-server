@@ -1,5 +1,5 @@
-import { types as _, GraphQLError } from '@kemsu/graphql-server';
-import { verifySignedIn } from '@lib/authorization';
+import { types as _, GraphQLError, jsonToString } from '@kemsu/graphql-server';
+import { findUser, findUnit } from '@lib/authorization';
 
 export default {
   type: _.JSON,
@@ -7,21 +7,27 @@ export default {
     unitId: { type: _.NonNull(_.Int) },
     reply: { type: _.JSON }
   },
-  async resolve(obj, { unitId, reply }, { db, user }) {
-    verifySignedIn(user);
+  async resolve(obj, { unitId, reply }, { userId, db }) {
+    const user = await findUser(userId, db);
+    if (user !== 'student') throw new GraphQLError(`User with role '${user.role}' cannot submit quiz reply. Only users with role 'student' are able to submit quiz reply`);
 
-    const [attempt] = await db.query(
-      `SELECT get_value(data_value_id) quiz, start_date startDate, replies_count repliesCount, feedback FROM quiz_attempts WHERE user_id = ${user.id} AND unit_id = ${unitId}`
-    );
-    if (attempt === undefined) throw new GraphQLError("Quiz attempt has not yet been started");
+    const attempt = user.getAttempt(unitId);
+    if (attempt === undefined) throw new GraphQLError(`Quiz attempt has not yet been started`);
+    const unit = await findUnit(userId, db).data;
+    if (unit.type !== 'quiz') throw new GraphQLError(`The unit is not of type 'quiz'`);
 
-    const { totalAttempts, timeLimit, questions, maxScore } = JSON.parse(attempt.quiz);
+    const subsection = await unit.getSubsection();
+    if (!user.hasCourseKey(subsection.courseId)) throw new GraphQLError(`You are not enrolled in the course containing the quiz`);
+    if (!subsection.isAccessible()) throw new GraphQLError(`Access to the subsection containing the quiz has not yet been opened`);
+    if (subsection.isExpired()) throw new GraphQLError(`Access to the subsection containing the quiz has expired`);
+
+    const { totalAttempts, timeLimit, questions, maxScore } = unit.data;
     const { startDate, repliesCount } = attempt;
 
-    if (repliesCount >= totalAttempts) throw new GraphQLError("The number of replies submitted to the quiz exceeds the limit");
+    if (repliesCount >= totalAttempts) throw new GraphQLError(`The number of replies submitted to the quiz exceeds the limit`);
     if (timeLimit) {
       const permittedDate = new Date(startDate.getTime() + timeLimit*60000);
-      if (new Date() > permittedDate) throw new GraphQLError("Time to submit a reply to the quiz has expired");
+      if (new Date() > permittedDate) throw new GraphQLError(`Time to submit a reply to the quiz has expired`);
     }
 
     let totalScore = 0;
@@ -58,26 +64,13 @@ export default {
       }
       
     } catch (error) {
-      throw new GraphQLError("Invalid reply format");
+      throw new GraphQLError(`Invalid reply format`);
     }
 
     const score = Math.floor(maxScore * totalScore / questions.length);
 
-    try {
-
-      await db.query(`CALL submit_quiz_reply(${user.id}, ${unitId}, ${JSON.stringify(reply)}, ${score}, ${JSON.stringify(feedback)})`);
-
-    } catch (error) {
-
-      if (error.rootCause?.message === 'invalid role') throw new GraphQLError(`User with role '${user.role}' cannot submit quiz reply. Only users with role 'student' are able to submit quiz reply`);
-      if (error.rootCause?.message === 'not enrolled') throw new GraphQLError("You are not enrolled in the course containing the quiz");
-      if (error.rootCause?.message === 'access closed') throw new GraphQLError("Access to the subsection containing the quiz has not yet been opened");
-      if (error.rootCause?.message === 'access expired') throw new GraphQLError("Access to the subsection containing the quiz has expired");
-
-      throw error;
-      
-    }
-
+    await db.query(`CALL submit_quiz_reply(${userId}, ${unitId}, ${jsonToString(reply)}, ${score}, ${jsonToString(feedback)})`);
+    user.updateQuizAttempt(unitId, { reply, score, feedback });
     return feedback;
   }
 };

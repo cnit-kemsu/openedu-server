@@ -1,5 +1,6 @@
 import { types as _, upgradeResolveFn } from '@kemsu/graphql-server';
-import { sortByIndexNumber } from '@lib/sortBySequenceNumber';
+import { findUser, findSubsection } from '@lib/authorization';
+import { sortBySequenceNumber } from '@lib/sortBySequenceNumber';
 import { resolveDate } from '@lib/resolvers';
 import SectionType from '../section/SectionType';
 import UnitType from '../unit/UnitType';
@@ -27,13 +28,20 @@ export default _.Object({
         return loaders.courseDelivery_section_byId.load(sectionId, fields);
       }
     } |> upgradeResolveFn,
+
     units: {
       type: _.List(_.NonNull(UnitType)),
-      async resolve({ id }, {}, { loaders }, { fields }) {
-        fields.indexNumber = null;
-        const units = await loaders.courseDelivery_unit_bySubsectionId.load(id, fields);
-        if (units) return units.sort(sortByIndexNumber);
-        return units;
+      async resolve({ id }, {}, { userId, db, loaders }, { fields }) {
+
+        const user = await findUser(userId, db);
+        if (user.role !== 'superuser' && user.role !== 'admin') {
+          const subsection = await findSubsection(id);
+          if (!user.hasCourseKey(subsection.courseId)) return [];
+          if (user.role === 'student' && !subsection.isAccessible()) return [];
+        }
+
+        return await loaders.courseDelivery_unit_bySubsectionId.load(id, { ...fields, sequenceNumber: null })
+        |> #.sort(sortBySequenceNumber);
       }
     } |> upgradeResolveFn,
 

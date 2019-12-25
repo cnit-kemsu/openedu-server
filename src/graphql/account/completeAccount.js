@@ -1,4 +1,4 @@
-import { types as _, signBearer } from '@kemsu/graphql-server';
+import { types as _, signBearer, jsonToString } from '@kemsu/graphql-server';
 import { jwtSecret } from '../../config';
 
 export default {
@@ -8,13 +8,12 @@ export default {
     lastname: { type: _.NonNull(_.String) },
     middlename: { type: _.String }
   },
-  async resolve(obj, data, { db, user }) {
+  async resolve(obj, data, { userId, db }) {
 
     await db.query(
-      `UPDATE users SET _data = ? WHERE id = ?`,
-      [JSON.stringify(data),user.id]
+      `UPDATE users SET _data = ${jsonToString(data)} WHERE id = ${userId}`
     );
     
-    return signBearer({ ...user, complete: true }, jwtSecret);
+    return signBearer({ userId, complete: true }, jwtSecret);
   }
 };

@@ -1,4 +1,5 @@
 import { types as _, upgradeResolveFn } from '@kemsu/graphql-server';
+import { sortBySequenceNumber } from '@lib/sortBySequenceNumber';
 import CourseType from '../course/CourseType';
 import SubsectionType from '../subsection/SubsectionType';
 
@@ -16,10 +17,12 @@ export default _.Object({
         return loaders.courseDelivery_instance_byId.load(courseId, fields);
       }
     } |> upgradeResolveFn,
+
     subsections: {
       type: _.List(_.NonNull(SubsectionType)),
-      resolve({ id }, {}, { loaders }, { fields }) {
-        return loaders.courseDelivery_subsection_bySectionId.load(id, fields);
+      async resolve({ id }, {}, { loaders }, { fields }) {
+        return await loaders.courseDelivery_subsection_bySectionId.load(id, { ...fields, sequenceNumber: null })
+        |> #.sort(sortBySequenceNumber);
       }
     } |> upgradeResolveFn
 

@@ -1,4 +1,5 @@
 import { types as _, resolveJSON, upgradeResolveFn } from '@kemsu/graphql-server';
+import { findUser, findUnit } from '@lib/authorization';
 import UnitTypeEnumType from '../../_shared/UnitTypeEnum';
 import SubsectionType from '../subsection/SubsectionType';
 
@@ -13,22 +14,27 @@ export default _.Object({
 
     data: {
       type: _.JSON,
-      resolve(unit, {}, { user }) {
-        const data = resolveJSON(unit.data);
+      async resolve({ id, data }, {}, { userId, db }) {
+        const _data = resolveJSON(data);
+        if (_data != null) {
 
-        if (data != null && user.role === 'student' && unit.type === 'quiz') {
+          const user = await findUser(userId, db);
+          const unit = await findUnit(id);
+          if (user.role === 'student' && unit.type === 'quiz') {
 
-          if (unit.hasAttempt == null) delete data.questions;
-          else {
-            const { questions } = data;
-            for (const { answerOptions } of questions) {
-              if (answerOptions === undefined) continue;
-              for (const option of answerOptions) delete option.correct;
+            if (!user.hasCourseKey(await unit.getSubsection().courseId)) return null;
+
+            if (!user.hasQuizAttempt(id)) delete _data.questions;
+            else {
+              for (const { answerOptions } of _data.questions) {
+                if (answerOptions === undefined) continue;
+                for (const option of answerOptions) delete option.correct;
+              }
             }
           }
         }
         
-        return data;
+        return _data;
       } 
     },
 

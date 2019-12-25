@@ -7,8 +7,8 @@ export default {
     movingSubsectionId: { type: _.NonNull(_.Int) },
     putBeforeSubsectionId: { type: _.Int }
   },
-  async resolve(obj, { movingSubsectionId, putBeforeSubsectionId = null }, { user, db }) {
-    await verifyAdminRole(user, db);
+  async resolve(obj, { movingSubsectionId, putBeforeSubsectionId = null }, { userId, db }) {
+    await verifyAdminRole(userId, db);
 
     try {
       await db.query(`CALL move_entry_over('course_design_subsection', ${movingSubsectionId}, ${putBeforeSubsectionId})`);

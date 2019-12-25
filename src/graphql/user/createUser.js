@@ -11,15 +11,15 @@ export default {
     role: { type: _.NonNull(RoleInputEnumType) },
     email: { type: _.NonNull(_.String) }
   },
-  async resolve(obj, { role, email }, { user, db }) {
-    await verifyAdminRole(user, db);
+  async resolve(obj, { role, email }, { userId, db }) {
+    await verifyAdminRole(userId, db);
 
     const passkey = generatePasskey(email);
     try {
 
-      const { insertId: userId } = await db.query(`INSERT INTO users (role, email) values (${role}, ${email})`);
+      const { insertId } = await db.query(`INSERT INTO users (role, email) values (${role}, ${email})`);
 
-      db.query(`INSERT INTO unverified_accounts (user_id, passkey) values (${userId}, ${passkey})`);
+      db.query(`INSERT INTO unverified_accounts (user_id, passkey) values (${insertId}, ${passkey})`);
 
       sendEmail(
         email,
@@ -27,11 +27,11 @@ export default {
         `
           <div>Вы были добавлены в систему открытого образования.</div>
           <div>Проверочный ключ: ${passkey}</div>
-          <div>Подтвердите свой аккаунт пройдя по <a href='${url}/account/confirm?email=${encodeURIComponent(JSON.stringify(email))}'>ссылке</a></div>
+          <div>Подтвердите свой аккаунт пройдя по <a href='${url}/account/confirm?email=${JSON.stringify(email) |> encodeURIComponent}'>ссылке</a></div>
         `
       );
       
-      return userId;
+      return insertId;
 
     } catch(error) {
 

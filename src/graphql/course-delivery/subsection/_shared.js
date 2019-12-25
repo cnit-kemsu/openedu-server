@@ -1,6 +1,7 @@
 import { SQLBuilder } from '@kemsu/graphql-server';
 
 const selectExprListBuilder = {
+  id: 'id',
   name: '_name',
   sectionId: 'section_id',
   accessDate: 'access_date',
@@ -8,7 +9,7 @@ const selectExprListBuilder = {
 
   summary: 'get_value(summary_value_id)',
 
-  section: ['section_id'],
+  section: ['sectionId'],
   units: ['id'],
 
   previousSubsectionId: 'get_previous_subsection_delivery_id(id)',

@@ -1,4 +1,4 @@
-import { types as _, GraphQLError, ClientInfo, hashPassword, signBearer } from '@kemsu/graphql-server';
+import { types as _, GraphQLError, ClientInfo, hashPassword, signBearer, escape } from '@kemsu/graphql-server';
 import { jwtSecret } from '../../config';
 
 export default {
@@ -14,15 +14,15 @@ export default {
       SELECT id, role, passkey accountPasskey
       FROM users
       RIGHT JOIN unverified_accounts ON id = user_id
-      WHERE email = ?
-    `, email);
+      WHERE email = ${escape(email)}
+    `);
     if (accountPasskey === undefined) return 0;
     if (accountPasskey !== passkey) throw new GraphQLError(
       'Неверный проверочный ключ',
       ClientInfo.UNMET_CONSTRAINT
     );
-    db.query(`UPDATE users SET pwdhash = ? WHERE id = ?`, [hashPassword(password), user.id]);
-    db.query(`DELETE FROM unverified_accounts WHERE user_id = ?`, user.id);
+    db.query(`UPDATE users SET pwdhash = ${hashPassword(password)|> escape} WHERE id = ${user.id}`);
+    db.query(`DELETE FROM unverified_accounts WHERE user_id = ${user.id}`);
     
     return signBearer({ ...user, verified: true, complete: false }, jwtSecret);
   }

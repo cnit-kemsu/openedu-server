@@ -10,9 +10,9 @@ export default {
 
     const user = await findUser(userId, db);
     if (user.role !== 'student') throw new GraphQLError(`User with the role '${this.role}' cannot enroll in a course. Only users with the role 'student' are able to enroll in courses`, ClientInfo.UNMET_CONSTRAINT);
-    if (user.isEnrolledInCourse(courseId)) throw new GraphQLError(`You are already enrolled in the course`, ClientInfo.UNMET_CONSTRAINT);
+    if (user.hasCourseKey(courseId)) throw new GraphQLError(`You are already enrolled in the course`, ClientInfo.UNMET_CONSTRAINT);
 
-    const course = await findCourse(courseId);
+    const course = await findCourse(courseId, db);
     if (course.price !== null) throw new GraphQLError(`You must pay to enroll in the course`, ClientInfo.UNMET_CONSTRAINT);
     if (course.enrollmentEndDate < new Date()) throw new GraphQLError(`Enrollment has expired`, ClientInfo.UNMET_CONSTRAINT);
 

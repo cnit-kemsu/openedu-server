@@ -2,6 +2,7 @@ import { SQLBuilder, escape, jsonToString } from '@kemsu/graphql-server';
 import { insertFilesOfValue } from '@lib/insertFilesOfValue';
 
 const selectExprListBuilder = {
+  id: 'id',
   name: '_name',
   type: '_type',
   subsectionId: 'subsection_id',
@@ -10,11 +11,7 @@ const selectExprListBuilder = {
   summary: 'get_value(summary_value_id)',
   data: 'get_value(data_value_id)',
 
-  subsection: ['subsection_id'],
-
-  hasAttempt({ user, unitId }) {
-    return [`(SELECT 1 FROM quiz_attempts WHERE user_id = ${user.id} AND unit_id = ${unitId})`];
-  },
+  subsection: ['subsectionId']
 };
 
 const whereConditionBuilder = {

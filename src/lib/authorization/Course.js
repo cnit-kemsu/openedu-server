@@ -3,7 +3,7 @@ import { CachedValue, Cache } from './Caching';
 class Course extends CachedValue {
 
   async _obtain(db) {
-    await db.query(`
+    const [course] = await db.query(`
       SELECT
         _name AS name,
         start_date AS startDate,
@@ -11,8 +11,11 @@ class Course extends CachedValue {
         price,
         creation_date AS creationDate,
       FROM course_delivery_instances
-      WHERE id = ${this.id}
-    `) |> Object.assign(this, #);
+      WHERE id = ${this.key}
+    `);
+    if (course === undefined) return;
+    course.id = this.key;
+    return course;
   }
 }
 
