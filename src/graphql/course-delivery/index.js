@@ -10,18 +10,20 @@ import deleteCourseDeliveryInstance from './course/deleteCourse';
 import sendSertificate from './course/sendSertificate';
 import courseLoaders from './course/_loaders';
 
-import courseDeliveryInstanceUserProgress from './course/courseDeliveryInstanceUserProgress';
+//import courseDeliveryInstanceUserProgress from './course/courseDeliveryInstanceUserProgress';
 import enrollInCourse from './course/enrollInCourse';
 
 import createCourseDeliverySection from './section/createSection';
 import updateCourseDeliverySection from './section/updateSection';
 import deleteCourseDeliverySection from './section/deleteSection';
+import moveCourseDeliverySection from './section/moveSection';
 import sectionLoaders from './section/_loaders';
 
 import courseDeliverySubsection from './subsection/subsection';
 import createCourseDeliverySubsection from './subsection/createSubsection';
 import updateCourseDeliverySubsection from './subsection/updateSubsection';
 import deleteCourseDeliverySubsection from './subsection/deleteSubsection';
+import moveCourseDeliverySubsection from './subsection/moveSubsection';
 import subsectionLoaders from './subsection/_loaders';
 
 import courseDeliveryUnit from './unit/unit';
@@ -40,18 +42,21 @@ export default {
     courseDeliverySubsection,
     courseDeliveryUnit,
 
-    courseDeliveryInstanceUserProgress
+    //courseDeliveryInstanceUserProgress
   },
   mutation: {
     createCourseDeliveryInstance,
     updateCourseDeliveryInstance,
     defunctCourseDeliveryInstance,
     deleteCourseDeliveryInstance,
+    moveCourseDeliverySection,
+
     sendSertificate,
 
     createCourseDeliverySection,
     updateCourseDeliverySection,
     deleteCourseDeliverySection,
+    moveCourseDeliverySubsection,
 
     createCourseDeliverySubsection,
     updateCourseDeliverySubsection,

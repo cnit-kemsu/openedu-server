@@ -15,7 +15,7 @@ export default {
     const [account] = await db.query(`SELECT passkey FROM unverified_accounts WHERE user_id = ${userId}`);
     if (account === undefined) return 0;
     if (account.passkey !== passkey) throw new GraphQLError(
-      "Неверный проверочный ключ",
+      `Неверный проверочный ключ`,
       ClientInfo.UNMET_CONSTRAINT
     );
     db.query(`DELETE FROM unverified_accounts WHERE user_id = ${userId}`);

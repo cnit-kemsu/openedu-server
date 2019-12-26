@@ -23,6 +23,6 @@ export default {
       picture,
       bearer: signBearer(user, jwtSecret)
     };
-    throw new GraphQLError("Неверный адрес электронной почты или пароль", ClientInfo.UNMET_CONSTRAINT);
+    throw new GraphQLError(`Неверный адрес электронной почты или пароль`, ClientInfo.UNMET_CONSTRAINT);
   }
 };

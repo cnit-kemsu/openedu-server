@@ -1,6 +1,7 @@
 import { types as _, SQLBuilder, escape } from '@kemsu/graphql-server';
 
 const selectExprListBuilder = {
+  id: 'id',
   name: '_name',
   sectionId: 'section_id',
   accessPeriod: 'access_period',

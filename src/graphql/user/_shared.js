@@ -3,6 +3,7 @@ import { insertFilesOfValue } from '@lib/insertFilesOfValue';
 import RoleEnumType from './RoleEnumType';
 
 const selectExprListBuilder = {
+  id: 'id',
   verified: `IF(passkey IS NULL, TRUE, FALSE)`,
   firstname: getJSON('_data', 'firstname'),
   lastname: getJSON('_data', 'lastname'),

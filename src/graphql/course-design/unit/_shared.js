@@ -2,6 +2,7 @@ import { SQLBuilder, jsonToString } from '@kemsu/graphql-server';
 import { insertFilesOfValue } from '@lib/insertFilesOfValue';
 
 const selectExprListBuilder = {
+  id: 'id',
   name: '_name',
   type: '_type',
   subsectionId: 'subsection_id',
