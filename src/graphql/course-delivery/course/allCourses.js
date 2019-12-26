@@ -12,7 +12,7 @@ export default {
   async resolve(obj, { limit = 10, offset = 0, ...search }, { userId, db }, { fields }) {
 
     const selectExprList = sqlBuilder.buildSelectExprList(fields);
-    const whereClause = await sqlBuilder.buildWhereClause(search, ['defunct = 0'], { userId, db });
+    const whereClause = await sqlBuilder.buildWhereClause(search, null, { userId, db });
     return await db.query(`SELECT ${selectExprList} FROM course_delivery_instances ${whereClause} LIMIT ${limit} OFFSET ${offset}`);
   }
 } |> upgradeResolveFn;

@@ -37,7 +37,8 @@ const whereConditionBuilder = {
     const user = await findUser(userId, db);
     return `id IN (${user.courseKeys.join(', ')})`;
   },
-  availableToEnroll: value => value == null ? null : `available_to_enroll = ${value}`
+  availableToEnroll: value => value == null ? null : `available_to_enroll = ${value}`,
+  defunct: value => value == null ? null : `defunct = ${value}`
 };
 
 const assignmentListBuilder = {
@@ -68,6 +69,7 @@ export const searchArgs = {
   keys: { type: _.List(_.Int) },
   searchName: { type: _.String },
   currentUserEnrolled: { type: _.Boolean },
-  availableToEnroll: { type: _.Boolean }
+  availableToEnroll: { type: _.Boolean },
+  defunct: { type: _.Boolean }
 };
 
