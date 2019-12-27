@@ -33,7 +33,7 @@ export default {
     if (selectExprList === '*') return { id };
     return await db.query(`SELECT ${selectExprList} FROM course_delivery_subsections WHERE id = ${id}`)
     |> {
-      ...subsection,
+      ...subsection.props,
       ...#[0]
     };
   }

@@ -1,6 +1,6 @@
 import { CachedValue, Cache } from './Caching';
 
-class Unit extends CachedValue {
+export default class Unit extends CachedValue {
 
   async resolve(db) {
     const [unit] = await db.query(`
@@ -23,7 +23,9 @@ class Unit extends CachedValue {
       }
     }
     unit.id = this.key;
-    return unit;
+    this.props = unit;
+    Object.assign(this, unit);
+    return this;
   }
 
   async getSubsection() {
@@ -38,4 +40,3 @@ class Unit extends CachedValue {
   }
 }
 
-Cache.createCachedValues('units', Unit);

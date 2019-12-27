@@ -4,6 +4,7 @@ import RoleEnumType from './RoleEnumType';
 
 const selectExprListBuilder = {
   id: 'id',
+  email: 'email',
   verified: `IF(passkey IS NULL, TRUE, FALSE)`,
   firstname: getJSON('_data', 'firstname'),
   lastname: getJSON('_data', 'lastname'),

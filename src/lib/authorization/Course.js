@@ -1,6 +1,6 @@
 import { CachedValue, Cache } from './Caching';
 
-class Course extends CachedValue {
+export default class Course extends CachedValue {
 
   async _obtain(db) {
     const [course] = await db.query(`
@@ -15,8 +15,9 @@ class Course extends CachedValue {
     `);
     if (course === undefined) return;
     course.id = this.key;
-    return course;
+    this.props = course;
+    Object.assign(this, course);
+    return this;
   }
 }
 
-Cache.createCachedValues('subsections', Course);

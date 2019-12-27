@@ -5,15 +5,15 @@ function finalizeAttempt(a) {
   if (a.feedback !== null) a.feedback = JSON.parse(a.feedback);
 }
 
-class User extends CachedValue {
+export default class User extends CachedValue {
 
   async resolve(db) {
 
-    const [user] = db.query(`SELECT role, email, _data AS data FROM users WHERE id = ${this.key}`);
+    const [user] = await db.query(`SELECT role, email, _data AS data FROM users WHERE id = ${this.key}`);
     if (user === undefined) return;
     if (user.data !== null) user.data = JSON.parse(user.data);
 
-    let courses;
+    let courses = [];
     if (user.role === 'student') {
 
       courses = await db.query(`
@@ -32,7 +32,9 @@ class User extends CachedValue {
     if (courses !== undefined) user.courseKeys = courses.map(c => c.key);
     
     user.id = this.key;
-    return user;
+    this.props = user;
+    Object.assign(this, user);
+    return this;
   }
 
   hasCourseKey(courseId) {
@@ -57,9 +59,8 @@ class User extends CachedValue {
 
   updateQuizAttempt(unitId, data) {
     const attempt = this.getQuizAttempt(unitId);
-    Object.assign(attempt, data)
+    Object.assign(attempt, data);
   }
 
 }
 
-Cache.createCachedValues('users', User);

@@ -6,17 +6,19 @@ const selectExprListBuilder = {
   id: 'id',
   name: '_name',
   creatorId: 'creator_id',
+  creationDate: 'creation_date',
   startDate: 'start_date',
   enrollmentEndDate: 'enrollment_end_date',
   data: '_data',
-  creationDate: 'creation_date',
+  price: 'price',
 
   summary: 'get_value(summary_value_id)',
   description: 'get_value(description_value_id)',
   picture: 'get_value(picture_value_id)',
 
   sections: ['id'],
-  instructors: ['id']
+  instructors: ['id'],
+  isCurrentUserEnrolled: ['id']
 };
 
 const pattern = word => `%${word}%`;

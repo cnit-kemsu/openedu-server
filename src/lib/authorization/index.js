@@ -1,5 +1,14 @@
 import { GraphQLError, ClientInfo } from '@kemsu/graphql-server';
 import { Cache } from './Caching';
+import Course from './Course';
+import Subsection from './Subsection';
+import Unit from './Unit';
+import User from './User';
+
+Cache.createCachedValues('subsections', Course);
+Cache.createCachedValues('subsections', Subsection);
+Cache.createCachedValues('units', Unit);
+Cache.createCachedValues('users', User);
 
 export async function findUser(id, db) {
   if (id === undefined) throw new GraphQLError(`Not signed in`, ClientInfo.PERMISSION_DENIED);
