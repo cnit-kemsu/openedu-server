@@ -26,10 +26,10 @@ path.resolve('./public') |> express.static |> app.use;
 
 userInfo(jwtSecret) |> app.use(#);
 
-async function graphqlOptions({ _user: { id: userId } }) {
+async function graphqlOptions({ _user }) {
   const db = await pool.getConnection();
   return [{
-    userId,
+    userId: _user?.id,
     db
   }, function() {
     if (db !== undefined) db.end();

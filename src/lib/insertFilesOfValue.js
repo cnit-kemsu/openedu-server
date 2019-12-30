@@ -24,7 +24,7 @@ function collectFileSourceKeysOfValue(value, fileIdArray = []) {
 }
 
 export async function insertFilesOfValue(db, value) {
-  if (value === null) return '';
+  if (value === null) return null;
   
   const files = collectFilesOfValue(value);
   const insertIdArray = [];
@@ -46,5 +46,5 @@ export async function insertFilesOfValue(db, value) {
   
   replaceFilesOfValueWithSourceKeys(value, insertIdArray);
   const fileIdArray = collectFileSourceKeysOfValue(value);
-  return fileIdArray.join(',') |> `'${#}'`;
+  return fileIdArray.join(',') |> `'[${#}]'`;
 }

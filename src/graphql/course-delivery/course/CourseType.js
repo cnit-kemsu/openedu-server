@@ -67,6 +67,7 @@ export default _.Object({
     isCurrentUserEnrolled: {
       type: _.Boolean,
       async resolve({ id }, {}, { userId, db }) {
+        if (userId === undefined) return false;
         const user = await findUser(userId, db);
         return user.hasCourseKey(id);
       }
