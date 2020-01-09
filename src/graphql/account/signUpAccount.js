@@ -1,4 +1,4 @@
-import { types as _, hashPassword, signBearer, GraphQLError, ClientInfo, escape, jsonToString } from '@kemsu/graphql-server';
+import { types as _, hashPassword, signBearer, GraphQLError, ClientInfo, _escape, jsonToString } from '@kemsu/graphql-server';
 import { generatePasskey } from '@lib/generatePasskey';
 import { sendEmail } from '@lib/sendEmail';
 import { jwtSecret, sitename } from '../../config';
@@ -19,10 +19,10 @@ export default {
     try {
 
       const { insertId } = await db.query(
-        `INSERT INTO users (role, email, pwdhash, _data) values ('student', ${escape(email)}, ${hashPassword(password) |> escape}, ${jsonToString(data)})`
+        `INSERT INTO users (role, email, pwdhash, _data) values ('student', ${_escape(email)}, ${hashPassword(password) |> escape}, ${jsonToString(data)})`
       );
 
-      db.query(`INSERT INTO unverified_accounts (user_id, passkey) values (${insertId}, ${escape(passkey)})`);
+      db.query(`INSERT INTO unverified_accounts (user_id, passkey) values (${insertId}, ${_escape(passkey)})`);
 
       sendEmail(
         email,

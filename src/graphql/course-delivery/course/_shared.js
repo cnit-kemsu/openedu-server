@@ -1,4 +1,4 @@
-import { types as _, SQLBuilder, escape, escapePattern, jsonToString } from '@kemsu/graphql-server';
+import { types as _, SQLBuilder, _escape, escapePattern, jsonToString } from '@kemsu/graphql-server';
 import { insertFilesOfValue } from '@lib/insertFilesOfValue';
 import { findUser } from '@lib/authorization';
 
@@ -44,13 +44,13 @@ const whereConditionBuilder = {
 };
 
 const assignmentListBuilder = {
-  name: value => `_name = ${escape(value)}`,
+  name: value => `_name = ${_escape(value)}`,
   creatorId: value => `creator_id = ${value}`,
-  startDate: value => `start_date = ${escape(value)}`,
-  enrollmentEndDate: value => `enrollment_end_date = ${escape(value)}`,
+  startDate: value => `start_date = ${_escape(value)}`,
+  enrollmentEndDate: value => `enrollment_end_date = ${_escape(value)}`,
   data: value => `_data = ${jsonToString(value)}`,
 
-  summary: value => `summary_value_id = set_value(summary_value_id, ${escape(value)}, NULL)`,
+  summary: value => `summary_value_id = set_value(summary_value_id, ${_escape(value)}, NULL)`,
   async description(value, { db }) {
     const fileIdArray = await insertFilesOfValue(db, value);
     return `description_value_id = set_value(description_value_id, ${jsonToString(value)}, ${fileIdArray})`;

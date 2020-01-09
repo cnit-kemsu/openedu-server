@@ -1,10 +1,11 @@
-import { types as _, SQLBuilder, escapePattern, escape, jsonToString, getJSON } from '@kemsu/graphql-server';
+import { types as _, SQLBuilder, escapePattern, _escape, jsonToString, getJSON } from '@kemsu/graphql-server';
 import { insertFilesOfValue } from '@lib/insertFilesOfValue';
 import RoleEnumType from './RoleEnumType';
 
 const selectExprListBuilder = {
   id: 'id',
   email: 'email',
+  role: 'role',
   verified: `IF(passkey IS NULL, TRUE, FALSE)`,
   firstname: getJSON('_data', 'firstname'),
   lastname: getJSON('_data', 'lastname'),

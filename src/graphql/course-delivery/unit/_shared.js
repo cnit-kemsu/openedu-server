@@ -1,4 +1,4 @@
-import { SQLBuilder, escape, jsonToString } from '@kemsu/graphql-server';
+import { SQLBuilder, _escape, jsonToString } from '@kemsu/graphql-server';
 import { insertFilesOfValue } from '@lib/insertFilesOfValue';
 
 const selectExprListBuilder = {
@@ -20,11 +20,11 @@ const whereConditionBuilder = {
 };
 
 const assignmentListBuilder = {
-  name: value => `_name = ${escape(value)}`,
-  type: value => `_type = ${escape(value)}`,
+  name: value => `_name = ${_escape(value)}`,
+  type: value => `_type = ${_escape(value)}`,
   subsectionId: value => `subsection_id = ${value}`,
 
-  summary: value => `summary_value_id = set_value(summary_value_id, ${escape(value)}, NULL)`,
+  summary: value => `summary_value_id = set_value(summary_value_id, ${_escape(value)}, NULL)`,
   async data(value, { db }) {
     if (value !== null && !value.timeLimit) delete value.timeLimit;
     const fileIdArray = await insertFilesOfValue(db, value);

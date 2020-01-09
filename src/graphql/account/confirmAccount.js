@@ -1,4 +1,4 @@
-import { types as _, GraphQLError, ClientInfo, hashPassword, signBearer, escape } from '@kemsu/graphql-server';
+import { types as _, GraphQLError, ClientInfo, hashPassword, signBearer, _escape } from '@kemsu/graphql-server';
 import { jwtSecret } from '../../config';
 
 export default {
@@ -14,7 +14,7 @@ export default {
       SELECT id, role, passkey accountPasskey
       FROM users
       RIGHT JOIN unverified_accounts ON id = user_id
-      WHERE email = ${escape(email)}
+      WHERE email = ${_escape(email)}
     `);
     if (accountPasskey === undefined) return 0;
     if (accountPasskey !== passkey) throw new GraphQLError(

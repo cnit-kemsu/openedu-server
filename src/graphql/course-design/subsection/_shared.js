@@ -1,4 +1,4 @@
-import { types as _, SQLBuilder, escape } from '@kemsu/graphql-server';
+import { SQLBuilder, _escape } from '@kemsu/graphql-server';
 
 const selectExprListBuilder = {
   id: 'id',
@@ -20,13 +20,13 @@ const whereConditionBuilder = {
 };
 
 const assignmentListBuilder = {
-  name: value => `_name = ${escape(value)}`,
+  name: value => `_name = ${_escape(value)}`,
   sectionId: value => `section_id = ${value}`,
   
   accessPeriod: value => `access_period = ${value ? value : null}`,
   expirationPeriod: value => `expiration_period = ${value ? value : null}`,
   
-  summary: value => `summary_value_id = set_value(summary_value_id, ${escape(value)}, NULL)`
+  summary: value => `summary_value_id = set_value(summary_value_id, ${_escape(value)}, NULL)`
 };
 
 export const sqlBuilder = new SQLBuilder(
