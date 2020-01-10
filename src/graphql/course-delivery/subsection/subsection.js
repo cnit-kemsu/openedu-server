@@ -11,23 +11,22 @@ export default {
   async resolve(obj, { id }, { userId, db }, { fields }) {
 
     const user = await findUser(userId, db);
-    let subsection;
+    const subsection = await findSubsection(id, db);
     if (user.role !== 'superuser' && user.role !== 'admin') {
 
-      subsection = await findSubsection(id);
       if (!user.hasCourseKey(subsection.courseId)) {
         if (user.role === 'student') throw new GraphQLError(`You are not enrolled in the course containing the subsection`, ClientInfo.UNMET_CONSTRAINT);
         else if (user.role === 'instructor') throw new GraphQLError(`You are not assigned as an instructor to the course containing the subsection`, ClientInfo.UNMET_CONSTRAINT);
       }
       if (user.role === 'student' && !subsection.isAccessible()) throw new GraphQLError(`Access to the subsection has not yet been opened`, ClientInfo.UNMET_CONSTRAINT);
-
-      delete fields.id;
-      delete fields.sectionId;
-      delete fields.section;
-      delete fields.units;
-      delete fields.accessDate;
-      delete fields.expirationDate;
     }
+
+    // delete fields.id;
+    // delete fields.sectionId;
+    // delete fields.section;
+    // delete fields.units;
+    // delete fields.accessDate;
+    // delete fields.expirationDate;
     
     const selectExprList = sqlBuilder.buildSelectExprList(fields);
     if (selectExprList === '*') return { id };

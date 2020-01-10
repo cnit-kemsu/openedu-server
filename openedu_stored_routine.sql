@@ -403,7 +403,7 @@ BEGIN
 	
 		SELECT course_id, sequence_number INTO v_course_id, v_section_sequence_number FROM course_delivery_sections WHERE id = v_section_id;
 		SET v_previous_section_id = (
-			SELECT id, sequence_number FROM course_delivery_sections WHERE course_id = v_course_id
+			SELECT id FROM course_delivery_sections WHERE course_id = v_course_id
 			AND _is_follow_before(sequence_number, v_section_sequence_number, id, v_section_id)
 			ORDER BY -sequence_number, id DESC LIMIT 1
 		);
@@ -443,7 +443,7 @@ BEGIN
 		
 		SELECT course_id, sequence_number INTO v_course_id, v_section_sequence_number FROM course_delivery_sections WHERE id = v_section_id;
 		SET v_next_section_id = (
-			SELECT id, sequence_number FROM course_delivery_sections WHERE course_id = v_course_id
+			SELECT id FROM course_delivery_sections WHERE course_id = v_course_id
 			AND _is_follow_after(sequence_number, v_section_sequence_number, id, v_section_id)
 			ORDER BY -sequence_number DESC LIMIT 1
 		);
@@ -452,7 +452,7 @@ BEGIN
 			RETURN NULL;
 		END IF;
 		-- otherwise returns the first subsection identifier of the next section
-		RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_previous_section_id ORDER BY -sequence_number DESC LIMIT 1);
+		RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_next_section_id ORDER BY -sequence_number DESC LIMIT 1);
 	END IF;
 	-- if the specified subsection is not the last, then returns the next subsection identifier of the section
 	RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_section_id AND _is_follow_after(sequence_number, v_sequence_number, id, p_subsection_id) ORDER BY -sequence_number DESC LIMIT 1);
@@ -581,42 +581,41 @@ END;
 -- quiz routine
 --
 
-CREATE OR REPLACE PROCEDURE _check_user_ability_to_perform_quiz(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED)
-BEGIN
-  DECLARE v_has_access TINYINT(1) DEFAULT 0;
-	DECLARE v_access_date DATETIME;
-	DECLARE v_expiration_date DATETIME;
-	DECLARE v_course_id INT UNSIGNED;
-	DECLARE v_subsection_id INT UNSIGNED;
-  
-	CALL verify_session_user_role_assigned(p_user_id);
-	IF @role = 'null' THEN CALL _throw_error('undefined user'); END IF;
-	IF @role != 'student' THEN CALL _throw_error('invalid role'); END IF;
-	
-	SELECT c.id, access_date, expiration_date INTO v_course_id, v_access_date, v_expiration_date FROM course_delivery_instances AS c
-	JOIN course_delivery_sections AS s ON s.course_id = c.id
-	JOIN course_delivery_subsections AS ss ON ss.section_id = s.id
-	JOIN course_delivery_units AS u ON u.subsection_id = ss.id
-	WHERE u.id = p_unit_id;
-	
-	IF v_access_date > NOW() THEN CALL _throw_error('access closed'); END IF;
-	IF v_expiration_date < NOW() THEN CALL _throw_error('access expired'); END IF;	
-	
-	SET v_has_access = is_enrolled_to_course(p_user_id, v_course_id);
-	IF NOT v_has_access THEN CALL _throw_error('not enrolled'); END IF;
-END;
+-- CREATE OR REPLACE PROCEDURE _check_user_ability_to_perform_quiz(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED)
+-- BEGIN
+-- DECLARE v_has_access TINYINT(1) DEFAULT 0;
+-- DECLARE v_access_date DATETIME;
+-- DECLARE v_expiration_date DATETIME;
+-- DECLARE v_course_id INT UNSIGNED;
+-- DECLARE v_subsection_id INT UNSIGNED;
+-- 
+-- CALL verify_session_user_role_assigned(p_user_id);
+-- IF @role = 'null' THEN CALL _throw_error('undefined user'); END IF;
+-- IF @role != 'student' THEN CALL _throw_error('invalid role'); END IF;
+-- 
+-- SELECT c.id, access_date, expiration_date INTO v_course_id, v_access_date, v_expiration_date FROM course_delivery_instances AS c
+-- JOIN course_delivery_sections AS s ON s.course_id = c.id
+-- JOIN course_delivery_subsections AS ss ON ss.section_id = s.id
+-- JOIN course_delivery_units AS u ON u.subsection_id = ss.id
+-- WHERE u.id = p_unit_id;
+-- 
+-- IF v_access_date > NOW() THEN CALL _throw_error('access closed'); END IF;
+-- IF v_expiration_date < NOW() THEN CALL _throw_error('access expired'); END IF;
+-- 
+-- SET v_has_access = is_enrolled_to_course(p_user_id, v_course_id);
+-- IF NOT v_has_access THEN CALL _throw_error('not enrolled'); END IF;
+-- END;
 
 CREATE OR REPLACE FUNCTION create_quiz_attempt(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED, p_date DATETIME) RETURNS INT UNSIGNED
 BEGIN
   DECLARE v_data_value_id INT UNSIGNED DEFAULT (SELECT data_value_id FROM course_delivery_units WHERE id = p_unit_id);
-  SELECT _increase_value_total_attachments(v_data_value_id);
   INSERT INTO quiz_attempts (user_id, unit_id, data_value_id, start_date) VALUES (p_user_id, p_unit_id, v_data_value_id, p_date);
-  RETURN data_value_id;
+  RETURN _increase_value_total_attachments(v_data_value_id);
 END;
 
 CREATE OR REPLACE PROCEDURE submit_quiz_reply(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED, p_reply LONGTEXT, p_score SMALLINT UNSIGNED, p_feedback LONGTEXT)
 BEGIN
-	CALL _check_user_ability_to_perform_quiz(p_user_id, p_unit_id);
+	-- CALL _check_user_ability_to_perform_quiz(p_user_id, p_unit_id);
   UPDATE quiz_attempts SET last_submitted_reply = p_reply, score = p_score, feedback = p_feedback, last_submit_date = NOW(), replies_count = replies_count + 1 WHERE user_id = p_user_id AND unit_id = p_unit_id;
 END;
 

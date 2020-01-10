@@ -35,7 +35,7 @@ export default _.Object({
 
         const user = await findUser(userId, db);
         if (user.role !== 'superuser' && user.role !== 'admin') {
-          const subsection = await findSubsection(id);
+          const subsection = await findSubsection(id, db);
           if (!user.hasCourseKey(subsection.courseId)) return [];
           if (user.role === 'student' && !subsection.isAccessible()) return [];
         }
