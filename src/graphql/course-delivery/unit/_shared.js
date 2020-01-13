@@ -11,7 +11,9 @@ const selectExprListBuilder = {
   summary: 'get_value(summary_value_id)',
   data: 'get_value(data_value_id)',
 
-  subsection: ['subsectionId']
+  subsection: ['subsectionId'],
+  previousUnitId: ['id'],
+  nextUnitId: ['id']
 };
 
 const whereConditionBuilder = {

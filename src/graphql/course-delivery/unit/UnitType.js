@@ -10,7 +10,7 @@ export default _.Object({
     id: { type: _.NonNull(_.Int) },
     name: { type: _.NonNull(_.String) },
     summary: { type: _.String },
-    type: { type:  _.NonNull(UnitTypeEnumType) },
+    type: { type: _.NonNull(UnitTypeEnumType) },
 
     data: {
       type: _.JSON,
@@ -19,10 +19,10 @@ export default _.Object({
         if (_data != null) {
 
           const user = await findUser(userId, db);
-          const unit = await findUnit(id);
+          const unit = await findUnit(id, db);
           if (user.role === 'student' && unit.type === 'quiz') {
 
-            if (!user.hasCourseKey(await unit.getSubsection().courseId)) return null;
+            if (!user.hasCourseKey(await unit.getSubsection(db).courseId)) return null;
 
             if (!user.hasQuizAttempt(id)) delete _data.questions;
             else {
@@ -43,7 +43,27 @@ export default _.Object({
       resolve({ subsectionId }, {}, { loaders }, { fields }) {
         return loaders.courseDelivery_subsection_byId.load(subsectionId, fields);
       }
-    } |> upgradeResolveFn
+    } |> upgradeResolveFn,
+
+    previousUnitId: {
+      type: _.Int,
+      async resolve({ id: unitId }, {}, { db }) {
+        const unit = await findUnit(unitId, db);
+        const subsection = await unit.getSubsection(db);
+        const course = await subsection.getCourse(db);
+        return course.units.find(({ id }) => id === unitId).previousUnitId;
+      }
+    },
+
+    nextUnitId: {
+      type: _.Int,
+      async resolve({ id: unitId }, {}, { db }) {
+        const unit = await findUnit(unitId, db);
+        const subsection = await unit.getSubsection(db);
+        const course = await subsection.getCourse(db);
+        return course.units.find(({ id }) => id === unitId).nextUnitId;
+      }
+    }
 
   })
 });

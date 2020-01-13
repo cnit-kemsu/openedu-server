@@ -28,9 +28,9 @@ export default class Unit extends CachedValue {
     return this;
   }
 
-  async getSubsection() {
+  async getSubsection(db) {
     if (this._subsection === undefined)
-      this._subsection = await Cache.find('subsections', this.subsectionId);
+      this._subsection = await Cache.find('subsections', this.subsectionId, db);
     return this._subsection;
   }
 

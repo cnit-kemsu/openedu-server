@@ -12,9 +12,8 @@ const selectExprListBuilder = {
 
   section: ['sectionId'],
   units: ['id'],
-
-  previousSubsectionId: 'get_previous_subsection_delivery_id(id)',
-  nextSubsectionId: 'get_next_subsection_delivery_id(id)'
+  previousSubsectionId: ['id'],
+  nextSubsectionId: ['id']
 };
 
 const whereConditionBuilder = {

@@ -1,4 +1,4 @@
-import { CachedValue, Cache } from './Caching';
+import { CachedValue } from './Caching';
 
 function finalizeAttempt(a) {
   if (a.lastSubmittedReply !== null) a.lastSubmittedReply = JSON.parse(a.lastSubmittedReply);

@@ -45,8 +45,23 @@ export default _.Object({
       }
     } |> upgradeResolveFn,
 
-    previousSubsectionId: { type: _.Int },
-    nextSubsectionId: { type: _.Int }
+    previousSubsectionId: {
+      type: _.Int,
+      async resolve({ id: subsectionId }, {}, { db }) {
+        const subsection = await findSubsection(subsectionId, db);
+        const course = await subsection.getCourse(db);
+        return course.subsections.find(({ id }) => id === subsectionId).previousSubsectionId;
+      }
+    },
+
+    nextSubsectionId: {
+      type: _.Int,
+      async resolve({ id: subsectionId }, {}, { db }) {
+        const subsection = await findSubsection(subsectionId, db);
+        const course = await subsection.getCourse(db);
+        return course.subsections.find(({ id }) => id === subsectionId).nextSubsectionId;
+      }
+    }
 
   })
 });
