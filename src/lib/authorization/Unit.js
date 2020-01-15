@@ -34,6 +34,12 @@ export default class Unit extends CachedValue {
     return this._subsection;
   }
 
+  async getCourse(db) {
+    const subsection = await this.getSubsection(db);
+    const course = await subsection.getCourse(db);
+    return course;
+  }
+
   async isAccessible() {
     return await this.getSubsection()
     |> #.accessDate >= new Date();

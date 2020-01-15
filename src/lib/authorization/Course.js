@@ -5,6 +5,31 @@ function toIdArray({ id }) {
   return id;
 }
 
+function assignPrevNextEntities(sections) {
+
+  let previousSubsection = { id: null };
+  for (const section of sections) {
+    for (const subsection of section.subsections) {
+      subsection.section = section;
+      subsection.previousSubsectionId = previousSubsection.id;
+      previousSubsection.nextSubsectionId = subsection.id;
+      previousSubsection = subsection;
+    }
+  }
+
+  let previousUnit = { id: null };
+  for (const section of sections) {
+    for (const subsection of section.subsections) {
+      for (const unit of subsection.units) {
+        unit.subsection = subsection;
+        unit.previousUnitId = previousUnit.id;
+        previousUnit.nextUnitId = unit.id;
+        previousUnit = unit;
+      }
+    }
+  }
+}
+
 export default class Course extends CachedValue {
 
   async resolve(db) {
@@ -58,31 +83,30 @@ export default class Course extends CachedValue {
         .sort(sortBySequenceNumber);
     }
 
-    let previousSubsection = { id: null };
-    for (const section of sections) {
-      for (const subsection of section.subsections) {
-        subsection.previousSubsectionId = previousSubsection.id;
-        previousSubsection.nextSubsectionId = subsection.id;
-        previousSubsection = subsection;
-      }
-    }
+    assignPrevNextEntities(sections);
 
-    let previousUnit = { id: null };
-    for (const section of sections) {
-      for (const subsection of section.subsections) {
-        for (const unit of subsection.units) {
-          unit.previousUnitId = previousUnit.id;
-          previousUnit.nextUnitId = unit.id;
-          previousUnit = unit;
-        }
-      }
-    }
-
+    course.sections = sections;
     course.subsections = subsections;
     course.units = units;
     this.props = course;
     Object.assign(this, course);
     return this;
+  }
+
+  swapUnits(key1, key2) {
+
+    const unit1 = this.units.find(({ id }) => id === key1);
+    const subsection = unit1.subsection;
+    const index1 = subsection.units.findIndex(({ id }) => id === key1);
+    subsection.units.splice(index1, 1);
+    
+    if (key2 != null) {
+      const index2 = subsection.units.findIndex(({ id }) => id === key2);
+      subsection.units.splice(index2, 0, unit1);
+    } else subsection.units.push(unit1);
+
+    assignPrevNextEntities(this.sections);
+    console.log(this.sections);
   }
 }
 
