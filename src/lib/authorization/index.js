@@ -4,11 +4,13 @@ import Course from './Course';
 import Subsection from './Subsection';
 import Unit from './Unit';
 import User from './User';
+import Section from './Section';
 
 Cache.createCachedValues('users', User);
 Cache.createCachedValues('courses', Course);
 Cache.createCachedValues('subsections', Subsection);
 Cache.createCachedValues('units', Unit);
+Cache.createCachedValues('sections', Section);
 
 export async function findUser(id, db) {
   if (id === undefined) throw new GraphQLError(`Not signed in`, ClientInfo.PERMISSION_DENIED);
@@ -46,4 +48,10 @@ export async function verifyAdminRole(id, db) {
   if (user.role === 'superuser') return;
   if (user.role !== 'admin') throw new GraphQLError(`You do not have permission to perform the action`, ClientInfo.PERMISSION_DENIED);
   return user;
+}
+
+export async function findSection(id, db) {
+  const section = await Cache.find('sections', id, db);
+  if (section === undefined) throw new GraphQLError(`Invalid section key`, ClientInfo.PERMISSION_DENIED);
+  return section;
 }

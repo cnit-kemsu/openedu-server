@@ -1,4 +1,5 @@
 import { types as _ } from '@kemsu/graphql-server';
+import { findSection } from '@lib/authorization';
 import { verifyAdminRole } from '@lib/authorization';
 
 export default {
@@ -11,7 +12,10 @@ export default {
     await verifyAdminRole(userId, db);
 
     try {
-      await db.query(`CALL move_delivery_over('course_design_section', ${movingSectionId}, ${putBeforeSectionId})`);
+      await db.query(`CALL move_entry_over('course_delivery_section', ${movingSectionId}, ${putBeforeSectionId})`);
+      const section = await findSection(movingSectionId, db);
+      const course = await section.getCourse(db);
+      course.swapSections(movingSectionId, putBeforeSectionId);
       return 1;
     } catch(error) {
       throw error;

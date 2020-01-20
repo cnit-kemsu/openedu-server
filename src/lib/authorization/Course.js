@@ -12,6 +12,7 @@ function assignPrevNextEntities(sections) {
     for (const subsection of section.subsections) {
       subsection.section = section;
       subsection.previousSubsectionId = previousSubsection.id;
+      subsection.nextSubsectionId = null;
       previousSubsection.nextSubsectionId = subsection.id;
       previousSubsection = subsection;
     }
@@ -23,6 +24,7 @@ function assignPrevNextEntities(sections) {
       for (const unit of subsection.units) {
         unit.subsection = subsection;
         unit.previousUnitId = previousUnit.id;
+        unit.nextUnitId = null;
         previousUnit.nextUnitId = unit.id;
         previousUnit = unit;
       }
@@ -106,7 +108,35 @@ export default class Course extends CachedValue {
     } else subsection.units.push(unit1);
 
     assignPrevNextEntities(this.sections);
-    console.log(this.sections);
+  }
+
+  swapSubsections(key1, key2) {
+
+    const subsection1 = this.subsections.find(({ id }) => id === key1);
+    const section = subsection1.section;
+    const index1 = section.subsections.findIndex(({ id }) => id === key1);
+    section.subsections.splice(index1, 1);
+    
+    if (key2 != null) {
+      const index2 = section.subsections.findIndex(({ id }) => id === key2);
+      section.subsections.splice(index2, 0, subsection1);
+    } else section.subsections.push(subsection1);
+
+    assignPrevNextEntities(this.sections);
+  }
+
+  swapSections(key1, key2) {
+
+    const section1 = this.sections.find(({ id }) => id === key1);
+    const index1 = this.sections.findIndex(({ id }) => id === key1);
+    this.sections.splice(index1, 1);
+    
+    if (key2 != null) {
+      const index2 = this.sections.findIndex(({ id }) => id === key2);
+      this.sections.splice(index2, 0, section1);
+    } else this.sections.push(section1);
+
+    assignPrevNextEntities(this.sections);
   }
 }
 

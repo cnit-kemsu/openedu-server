@@ -1,4 +1,5 @@
 import { types as _ } from '@kemsu/graphql-server';
+import { findSubsection } from '@lib/authorization';
 import { verifyAdminRole } from '@lib/authorization';
 
 export default {
@@ -12,6 +13,9 @@ export default {
 
     try {
       await db.query(`CALL move_entry_over('course_delivery_subsection', ${movingSubsectionId}, ${putBeforeSubsectionId})`);
+      const subsection = await findSubsection(movingSubsectionId, db);
+      const course = await subsection.getCourse(db);
+      course.swapSubsections(movingSubsectionId, putBeforeSubsectionId);
       return 1;
     } catch(error) {
       throw error;
