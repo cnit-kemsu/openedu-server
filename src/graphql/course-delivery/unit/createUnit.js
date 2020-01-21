@@ -1,5 +1,5 @@
 import { types as _, ClientInfo, GraphQLError } from '@kemsu/graphql-server';
-import { verifyAdminRole } from '@lib/authorization';
+import { verifyAdminRole, findSubsection } from '@lib/authorization';
 import UnitTypeEnumType from '../../_shared/UnitTypeEnum';
 import { sqlBuilder } from './_shared';
 
@@ -21,7 +21,9 @@ export default {
       
       const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs, { db });
       const { insertId } = await db.query(`INSERT INTO course_delivery_units SET ${assignmentList}`);
-
+      const subsection = await findSubsection(inputArgs.subsectionId, db);
+      const course = await subsection.getCourse(db);
+      course.addUnit(insertId, inputArgs.subsectionId);
       await db.commit();
       return insertId;
 

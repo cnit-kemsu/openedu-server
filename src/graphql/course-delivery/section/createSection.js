@@ -1,5 +1,5 @@
 import { types as _, ClientInfo, GraphQLError } from '@kemsu/graphql-server';
-import { verifyAdminRole } from '@lib/authorization';
+import { verifyAdminRole, findCourse } from '@lib/authorization';
 import { sqlBuilder } from './_shared';
 
 export default {
@@ -16,6 +16,8 @@ export default {
       
       const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs);
       const { insertId } = await db.query(`INSERT INTO course_delivery_sections SET ${assignmentList}`);
+      const course = await findCourse(inputArgs.courseId, db);
+      course.addSection(insertId);
       return insertId;
 
     } catch(error) {
