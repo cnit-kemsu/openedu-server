@@ -14,10 +14,13 @@ export default {
 
     try {
       
+      /*cache*/const course = await findCourse(inputArgs.courseId, db);
+
       const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs);
       const { insertId } = await db.query(`INSERT INTO course_delivery_sections SET ${assignmentList}`);
-      const course = await findCourse(inputArgs.courseId, db);
-      course.addSection(insertId);
+      
+      /*cache*/course.addSection(insertId);
+
       return insertId;
 
     } catch(error) {

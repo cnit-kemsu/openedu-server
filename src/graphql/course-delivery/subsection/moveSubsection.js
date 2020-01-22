@@ -12,11 +12,16 @@ export default {
     await verifyAdminRole(userId, db);
 
     try {
+
+      /*cache*/const subsection = await findSubsection(movingSubsectionId, db);
+      /*cache*/const course = await subsection.getCourse(db);
+
       await db.query(`CALL move_entry_over('course_delivery_subsection', ${movingSubsectionId}, ${putBeforeSubsectionId})`);
-      const subsection = await findSubsection(movingSubsectionId, db);
-      const course = await subsection.getCourse(db);
-      course.swapSubsections(movingSubsectionId, putBeforeSubsectionId);
+
+      /*cache*/course.swapSubsections(movingSubsectionId, putBeforeSubsectionId);
+
       return 1;
+
     } catch(error) {
       throw error;
     }

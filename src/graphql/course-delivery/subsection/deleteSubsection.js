@@ -9,11 +9,13 @@ export default {
   async resolve(obj, { id }, { userId, db }) {
     await verifyAdminRole(userId, db);
 
-    const subsection = await findSubsection(id, db);
+    /*cache*/const subsection = await findSubsection(id, db);
+    /*cache*/const course = await subsection.getCourse(db);
+
     const { affectedRows } = await db.query(`DELETE FROM course_delivery_subsections WHERE id = ${id}`);
     
-    const course = await subsection.getCourse(db);
-    course.removeSubsection(id);
+    /*cache*/course.removeSubsection(id);
+    
     return affectedRows;
   }
 };

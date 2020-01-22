@@ -15,12 +15,15 @@ export default {
     await verifyAdminRole(userId, db);
 
     try {
+
+      /*cache*/const section = await findSection(inputArgs.sectionId, db);
+      /*cache*/const course = await section.getCourse(db);
       
       const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs);
       const { insertId } = await db.query(`INSERT INTO course_delivery_subsections SET ${assignmentList}`);
-      const section = await findSection(inputArgs.sectionId, db);
-      const course = await section.getCourse(db);
-      course.addSubsection(insertId, inputArgs.sectionId);
+      
+      /*cache*/course.addSubsection(insertId, inputArgs.sectionId);
+      
       return insertId;
 
     } catch(error) {

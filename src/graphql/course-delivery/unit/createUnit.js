@@ -17,13 +17,16 @@ export default {
 
     try {
 
+      /*cache*/const subsection = await findSubsection(inputArgs.subsectionId, db);
+      /*cache*/const course = await subsection.getCourse(db);
+
       await db.beginTransaction();
       
       const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs, { db });
       const { insertId } = await db.query(`INSERT INTO course_delivery_units SET ${assignmentList}`);
-      const subsection = await findSubsection(inputArgs.subsectionId, db);
-      const course = await subsection.getCourse(db);
-      course.addUnit(insertId, inputArgs.subsectionId);
+      
+      /*cache*/course.addUnit(insertId, inputArgs.subsectionId);
+
       await db.commit();
       return insertId;
 
