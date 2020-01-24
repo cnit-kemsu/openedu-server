@@ -38,6 +38,20 @@ export default _.Object({
       } 
     },
 
+    currentUserLastAttempt: {
+      type: _.JSON,
+      async resolve({ id }, {}, { userId, db }) {
+
+        const unit = await findUnit(id, db);
+        if (unit.type !== 'quiz') return null;
+
+        const user = await findUser(userId, db);
+        if (user.role !== 'student') return null;
+
+        return await user.findQuizAttempt(id);
+      } 
+    },
+
     subsection: {
       type: _.NonNull(SubsectionType),
       resolve({ subsectionId }, {}, { loaders }, { fields }) {

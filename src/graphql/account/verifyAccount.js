@@ -5,7 +5,7 @@ import { jwtSecret } from '../../config';
 export default {
   type: _.NonNull(_.String),
   args: {
-    email: { type: _.String },
+    //email: { type: _.String },
     passkey: { type: _.NonNull(_.String) }
   },
   async resolve(obj, { passkey }, { userId, db }) {

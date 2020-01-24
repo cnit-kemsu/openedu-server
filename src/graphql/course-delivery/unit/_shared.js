@@ -13,7 +13,8 @@ const selectExprListBuilder = {
 
   subsection: ['subsectionId'],
   previousUnitId: ['id'],
-  nextUnitId: ['id']
+  nextUnitId: ['id'],
+  currentUserLastAttempt: ['id']
 };
 
 const whereConditionBuilder = {

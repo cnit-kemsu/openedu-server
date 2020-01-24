@@ -19,7 +19,7 @@ export default {
     try {
 
       const { insertId } = await db.query(
-        `INSERT INTO users (role, email, pwdhash, _data) values ('student', ${_escape(email)}, ${hashPassword(password) |> escape}, ${jsonToString(data)})`
+        `INSERT INTO users (role, email, pwdhash, _data) values ('student', ${_escape(email)}, ${hashPassword(password) |> _escape}, ${jsonToString(data)})`
       );
 
       db.query(`INSERT INTO unverified_accounts (user_id, passkey) values (${insertId}, ${_escape(passkey)})`);

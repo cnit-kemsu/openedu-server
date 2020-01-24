@@ -33,12 +33,12 @@ export default _.Object({
       type: _.List(_.NonNull(UnitType)),
       async resolve({ id }, {}, { userId, db, loaders }, { fields }) {
 
-        const user = await findUser(userId, db);
-        if (user.role !== 'superuser' && user.role !== 'admin') {
-          const subsection = await findSubsection(id, db);
-          if (!user.hasCourseKey(subsection.courseId)) return [];
-          if (user.role === 'student' && !subsection.isAccessible()) return [];
-        }
+        // const user = await findUser(userId, db);
+        // if (user.role !== 'superuser' && user.role !== 'admin') {
+        //   const subsection = await findSubsection(id, db);
+        //   if (!user.hasCourseKey(subsection.courseId)) return [];
+        //   if (user.role === 'student' && !subsection.isAccessible()) return [];
+        // }
 
         return await loaders.courseDelivery_unit_bySubsectionId.load(id, { ...fields, sequenceNumber: null })
         |> #.sort(sortBySequenceNumber);

@@ -17,7 +17,7 @@ export default class Unit extends CachedValue {
       for (const question of unit.data.questions) {
         delete question.content;
         if (question.answerOptions === undefined) continue;
-        for (const option of question.data) {
+        for (const option of question.answerOptions) {
           delete option.content;
         }
       }
