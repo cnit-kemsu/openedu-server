@@ -16,7 +16,7 @@ export default {
     if (course.price !== null) throw new GraphQLError(`You must pay to enroll in the course`, ClientInfo.UNMET_CONSTRAINT);
     if (course.enrollmentEndDate < new Date()) throw new GraphQLError(`Enrollment has expired`, ClientInfo.UNMET_CONSTRAINT);
 
-    await db.query(`CALL enroll_user_in_free_course(${user.id}, ${courseId})`);
+    await db.query(`CALL enroll_user_into_free_course(${user.id}, ${courseId})`);
 
     user.pushCourseKey(courseId);
     return 1;

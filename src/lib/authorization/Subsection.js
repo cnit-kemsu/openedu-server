@@ -25,11 +25,11 @@ export default class Subsection extends CachedValue {
   }
 
   isAccessible() {
-    return this.accessDate >= new Date();
+    return this.accessDate == null || this.accessDate >= new Date();
   }
 
   isExpired() {
-    return this.expirationDate < new Date();
+    return this.expirationDate != null && this.expirationDate < new Date();
   }
 }
 

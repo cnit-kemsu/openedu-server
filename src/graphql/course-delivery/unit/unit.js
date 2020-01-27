@@ -14,7 +14,8 @@ export default {
     const unit = await findUnit(id, db);
     if (user.role !== 'superuser' && user.role !== 'admin') {
       
-      if (!user.hasCourseKey(await unit.getSubsection().courseId)) {
+      const subsection = await unit.getSubsection();
+      if (!user.hasCourseKey(subsection.courseId)) {
         if (user.role === 'student') throw new GraphQLError(`You are not enrolled in the course containing the unit`, ClientInfo.UNMET_CONSTRAINT);
         else if (user.role === 'instructor') throw new GraphQLError(`You are not assigned as an instructor to the course containing the unit`, ClientInfo.UNMET_CONSTRAINT);
       }

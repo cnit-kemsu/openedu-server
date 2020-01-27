@@ -9,14 +9,16 @@ export default {
   },
   async resolve(obj, { unitId, reply }, { userId, db }) {
     const user = await findUser(userId, db);
-    if (user !== 'student') throw new GraphQLError(`User with role '${user.role}' cannot submit quiz reply. Only users with role 'student' are able to submit quiz reply`);
+    if (user.role !== 'student') throw new GraphQLError(`User with role '${user.role}' cannot submit quiz reply. Only users with role 'student' are able to submit quiz reply`);
 
-    const attempt = user.getAttempt(unitId);
+    const attempt = user.getQuizAttempt(unitId);
     if (attempt === undefined) throw new GraphQLError(`Quiz attempt has not yet been started`);
-    const unit = await findUnit(userId, db).data;
+    attempt.startDate = new Date(attempt.startDate);
+
+    const unit = await findUnit(unitId, db);
     if (unit.type !== 'quiz') throw new GraphQLError(`The unit is not of type 'quiz'`);
 
-    const subsection = await unit.getSubsection();
+    const subsection = await unit.getSubsection(db);
     if (!user.hasCourseKey(subsection.courseId)) throw new GraphQLError(`You are not enrolled in the course containing the quiz`);
     if (!subsection.isAccessible()) throw new GraphQLError(`Access to the subsection containing the quiz has not yet been opened`);
     if (subsection.isExpired()) throw new GraphQLError(`Access to the subsection containing the quiz has expired`);
@@ -31,7 +33,7 @@ export default {
     }
 
     let totalScore = 0;
-    const feedback = attempt.feedback ? JSON.parse(attempt.feedback) : [];
+    const feedback = attempt.feedback || [];
 
     try {
 
@@ -70,7 +72,7 @@ export default {
     const score = Math.floor(maxScore * totalScore / questions.length);
 
     await db.query(`CALL submit_quiz_reply(${userId}, ${unitId}, ${jsonToString(reply)}, ${score}, ${jsonToString(feedback)})`);
-    user.updateQuizAttempt(unitId, { reply, score, feedback });
+    user.updateQuizAttempt(unitId, { lastSubmittedReply: reply, score, feedback, repliesCount: repliesCount + 1 });
     return feedback;
   }
 };

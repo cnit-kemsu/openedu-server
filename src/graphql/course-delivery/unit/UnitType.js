@@ -22,7 +22,8 @@ export default _.Object({
           const unit = await findUnit(id, db);
           if (user.role === 'student' && unit.type === 'quiz') {
 
-            if (!user.hasCourseKey(await unit.getSubsection(db).courseId)) return null;
+            const subsection = await unit.getSubsection(db);
+            if (!user.hasCourseKey(subsection.courseId)) return null;
 
             if (!user.hasQuizAttempt(id)) delete _data.questions;
             else {
@@ -48,7 +49,7 @@ export default _.Object({
         const user = await findUser(userId, db);
         if (user.role !== 'student') return null;
 
-        return await user.findQuizAttempt(id);
+        return await user.getQuizAttempt(id);
       } 
     },
 

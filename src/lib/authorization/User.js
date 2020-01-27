@@ -16,19 +16,16 @@ export default class User extends CachedValue {
     let courses = [];
     if (user.role === 'student') {
 
-      try{
-        courses = await db.query(`
-          (SELECT course_id \`key\` FROM free_course_enrollments WHERE user_id = ${this.key})
-          UNION ALL
-          (SELECT course_id \`key\` FROM paid_course_purchases WHERE user_id = ${this.key} AND callback_status = 'success')
-        `);
-      } catch(err) {
-        throw err;
-      }
+      courses = await db.query(`
+        (SELECT course_id \`key\` FROM free_course_enrollments WHERE user_id = ${this.key})
+        UNION ALL
+        (SELECT course_id \`key\` FROM paid_course_purchases WHERE user_id = ${this.key} AND callback_status = 'success')
+      `);
 
       user.quizAttempts = await db.query(`
         SELECT unit_id unitId, start_date startDate, last_submitted_reply lastSubmittedReply, replies_count repliesCount, score, feedback FROM quiz_attempts WHERE user_id = ${this.key}
-      `) |> #?.forEach(finalizeAttempt);
+      `);
+      user.quizAttempts?.forEach(finalizeAttempt);
 
     } else if (user.role === 'instructor' || user.role === 'admin') {
       courses = await db.query(`SELECT course_id key FROM instructor_assignments WHERE user_id = ${this.key}`);
@@ -50,7 +47,8 @@ export default class User extends CachedValue {
   }
 
   hasQuizAttempt(unitId) {
-    return this.includes.includes(a => a.unitId === unitId);
+    const quizAttempt = this.quizAttempts.find(a => a.unitId === unitId);
+    return quizAttempt != null;
   }
 
   getQuizAttempt(unitId) {

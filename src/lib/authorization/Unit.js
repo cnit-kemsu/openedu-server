@@ -42,7 +42,7 @@ export default class Unit extends CachedValue {
 
   async isAccessible() {
     return await this.getSubsection()
-    |> #.accessDate >= new Date();
+    |> #.isAccessible();
   }
 }
 
