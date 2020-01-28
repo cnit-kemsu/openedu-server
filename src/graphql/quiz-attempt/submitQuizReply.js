@@ -62,7 +62,22 @@ export default {
           }
           const diff = totalCorrectlyMarkedOptions - totalIncorrectlyMarkedOptions;
           if (diff > 0) totalScore += diff / totalCorrectOptions;
+
+        } else if (question.type === 'SingleChoice') {
+  
+          if (!feedback[questionIndex]) feedback[questionIndex] = [];
+          const correctAnswerIndex = question.correctAnswerIndex;
+          
+          if (answer === correctAnswerIndex) {
+            totalScore++;
+            feedback[questionIndex][answer] = true;
+          } else {
+            feedback[questionIndex][answer] = false;
+          }
+
         }
+
+
       }
       
     } catch (error) {
