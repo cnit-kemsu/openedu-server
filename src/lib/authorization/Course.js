@@ -67,7 +67,10 @@ export default class Course extends CachedValue {
       SELECT
         id,
         sequence_number sequenceNumber,
-        subsection_id subsectionId
+        subsection_id subsectionId,
+        _type AS type,
+        IF (_type = 'quiz', JSON_VALUE(get_value(data_value_id), '$.finalCertification'), NULL) AS finalCertification,
+        _name AS name
       FROM course_delivery_units
       WHERE subsection_id IN (${subsections.map(toIdArray).join(', ')})
     `);
@@ -83,7 +86,7 @@ export default class Course extends CachedValue {
       subsection.units = units
         .filter(({ subsectionId }) => subsectionId === subsection.id)
         .sort(sortBySequenceNumber);
-      subsection.units.forEach(unit => { unit.subsection = subsection; });
+      subsection.units.forEach(unit => { unit.subsection = subsection; unit.finalCertification = unit.finalCertification === '1'; });
     }
 
     assignPrevNextEntities(sections);

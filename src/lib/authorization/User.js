@@ -3,6 +3,11 @@ import { CachedValue } from './Caching';
 function finalizeAttempt(a) {
   if (a.lastSubmittedReply !== null) a.lastSubmittedReply = JSON.parse(a.lastSubmittedReply);
   if (a.feedback !== null) a.feedback = JSON.parse(a.feedback);
+  const { unitName, quizData: [finalCertification, maxScore] } = JSON.parse(a.data);
+  delete a.data;
+  a.unitName = unitName;
+  a.finalCertification = finalCertification;
+  a.maxScore = maxScore;
 }
 
 export default class User extends CachedValue {
@@ -23,7 +28,7 @@ export default class User extends CachedValue {
       `);
 
       user.quizAttempts = await db.query(`
-        SELECT unit_id unitId, start_date startDate, last_submitted_reply lastSubmittedReply, replies_count repliesCount, score, feedback FROM quiz_attempts WHERE user_id = ${this.key}
+        SELECT (SELECT CONCAT('{ "unitName": "', _name, '", "quizData": ', JSON_EXTRACT(get_value(data_value_id), '$.finalCertification', '$.maxScore'), '}') FROM course_delivery_units WHERE id = unit_id) AS data, unit_id unitId, start_date startDate, last_submitted_reply lastSubmittedReply, replies_count repliesCount, score, feedback FROM quiz_attempts WHERE user_id = ${this.key}
       `);
       user.quizAttempts?.forEach(finalizeAttempt);
 

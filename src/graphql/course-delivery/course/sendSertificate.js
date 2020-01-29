@@ -6,12 +6,12 @@ export default {
   args: {
     courseId: { type: _.NonNull(_.Int) }
   },
-  async resolve(obj, { courseId }, { user, db }) {
-    if (!user) throw new Error('Unauthorized');
+  async resolve(obj, { courseId }, { userId, db }) {
+    if (!userId) throw new Error('Unauthorized');
 
     try {
       
-      await sendSertificate(db, user.id, courseId);
+      await sendSertificate(db, userId, courseId);
       return true;
 
     } catch(error) {

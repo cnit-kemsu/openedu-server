@@ -4,6 +4,7 @@ import { sendEmail } from './sendEmail';
 import { toWrittenCrun } from './toWrittenCrun';
 import { createPdf } from './createPdf';
 import { getUserProgress } from './getUserProgress';
+import { findUser, findCourse } from '@lib/authorization';
 
 const letterGrade = `
   <table class="gradetable">
@@ -334,14 +335,20 @@ const base = path.resolve(__dirname) |> #.replace(/\\/g, '/') |> 'file:///' + #;
 
 export async function sendSertificate(db, userId, courseId) {
 
-  const { certificateAvailable, units } = await getUserProgress(db, courseId, userId);
+  const _user = await findUser(userId, db);
+  const _course = await findCourse(courseId, db);
+  const courseFinalAttempts = _course.units.filter(({ type, finalCertification }) => type === 'quiz' && finalCertification);
+
+  const userFinalAttempts = _user.quizAttempts.filter(({ finalCertification }) => finalCertification);
+  const certificateAvailable = courseFinalAttempts.length === userFinalAttempts.length;
   if (!certificateAvailable) throw new Error('Sertificate not awailable');
 
+
   let maxScore = 0, totalScore = 0;
-  for (const { score, quiz } of units) {
-    if (!quiz.finalCertification) continue;
-    maxScore += quiz.maxScore;
-    totalScore += score;
+  for (const unitProgress of userFinalAttempts) {
+    //if (!quiz.finalCertification) continue;
+    maxScore += unitProgress.maxScore;
+    totalScore += unitProgress.score;
   }
 
   try {
