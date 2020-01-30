@@ -70,7 +70,8 @@ export default class Course extends CachedValue {
         subsection_id subsectionId,
         _type AS type,
         IF (_type = 'quiz', JSON_VALUE(get_value(data_value_id), '$.finalCertification'), NULL) AS finalCertification,
-        _name AS name
+        IF (_type = 'quiz', CAST(JSON_VALUE(get_value(data_value_id), '$.maxScore') AS INT), NULL) AS maxScore,
+        _name AS unitName
       FROM course_delivery_units
       WHERE subsection_id IN (${subsections.map(toIdArray).join(', ')})
     `);
@@ -97,6 +98,15 @@ export default class Course extends CachedValue {
     this.props = course;
     Object.assign(this, course);
     return this;
+  }
+
+  // constructor() {
+  //   super();
+  //   this.getUnitKeys = this.getUnitKeys.bind(this);
+  // }
+
+  getUnitKeys() {
+    return this.units.map(({ id }) => id);
   }
 
   swapUnits(key1, key2) {

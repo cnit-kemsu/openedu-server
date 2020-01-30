@@ -28,7 +28,16 @@ export default class User extends CachedValue {
       `);
 
       user.quizAttempts = await db.query(`
-        SELECT (SELECT CONCAT('{ "unitName": "', _name, '", "quizData": ', JSON_EXTRACT(get_value(data_value_id), '$.finalCertification', '$.maxScore'), '}') FROM course_delivery_units WHERE id = unit_id) AS data, unit_id unitId, start_date startDate, last_submitted_reply lastSubmittedReply, replies_count repliesCount, score, feedback FROM quiz_attempts WHERE user_id = ${this.key}
+        SELECT
+          (SELECT CONCAT('{ "unitName": "', _name, '", "quizData": ', JSON_EXTRACT(get_value(data_value_id), '$.finalCertification', '$.maxScore'), '}') FROM course_delivery_units WHERE id = unit_id) AS data,
+          unit_id unitId,
+          start_date startDate,
+          last_submitted_reply lastSubmittedReply,
+          replies_count repliesCount,
+          score,
+          feedback
+        FROM quiz_attempts
+        WHERE user_id = ${this.key}
       `);
       user.quizAttempts?.forEach(finalizeAttempt);
 

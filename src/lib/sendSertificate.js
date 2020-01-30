@@ -92,13 +92,13 @@ const pass_failGrade = `
 
 function createSertificateContent(course, user, { sertificateNumber, deliveryDate, startDate, totalScore, maxScore }) {
 
-  const labourInput_creditUnit = course?.data?.labourInput_creditUnit;
-  const laborInput_hours = course?.data?.laborInput_hours;
+  const labourInput_creditUnits = course?.data?.labourInput_creditUnit;
+  const laborInput_hours = course?.data?.labourInput_hours;
   const outcomes = course?.data?.outcomes;
   const competencies = course?.data?.competencies;
   const _user = user?.data || {};
-  const creditUnits = labourInput_creditUnit ? (labourInput_creditUnit.toString() + ' ' + toWrittenCrun(labourInput_creditUnit)) : null;
-  const gradeType = course?.data?.gradeType;
+  const creditUnits = labourInput_creditUnits ? (labourInput_creditUnits.toString() + ' ' + toWrittenCrun(labourInput_creditUnits)) : null;
+  const gradeType = course?.data?.gradeType || 'SCORE';
 
   let grade, gradeSystem;
   let percentage;
@@ -118,6 +118,8 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
       if (percentage < 60) grade = 'Незачет';
     }
   }
+
+  //${percentage ? `набрав ${percentage} баллов из 100` : ''}
 
   return `
     <html>
@@ -248,9 +250,9 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
           <div id="name_and_credit_units">
             <div id="name">${course.name}</div>
               <div id="credit_units">
-                ${labourInput_creditUnit ? `трудоемкостью ${creditUnits || ''},` : ''}
+                ${creditUnits ? `трудоемкостью ${creditUnits || ''},` : ''}
                 ${grade ? `получив ${gradeType === 'LETTER' ? 'оценку ' : ''}"${grade}",` : ''}
-                ${percentage ? `набрав ${percentage} баллов из 100` : ''}
+                ${`набрав ${totalScore} из ${maxScore}`}
               </div>
             </div>
           <div id="date">${deliveryDate}</div>
@@ -274,7 +276,10 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
                           <br />
                           Период освоения курса: ${startDate} - ${deliveryDate}
                           <br />
-                          Трудоемкость: ${creditUnits || ''} (часов: ${laborInput_hours})
+                          ${(creditUnits || laborInput_hours) ?
+                            creditUnits ? `Трудоемкость: ${creditUnits} ${laborInput_hours ? `(часов: ${laborInput_hours})` : ''}` :
+                            (laborInput_hours ? `Трудоемкость в часах: ${laborInput_hours}` : '')
+                          : ''}
                         </td>
                       </tr>
                         <td>
@@ -338,8 +343,9 @@ export async function sendSertificate(db, userId, courseId) {
   const _user = await findUser(userId, db);
   const _course = await findCourse(courseId, db);
   const courseFinalAttempts = _course.units.filter(({ type, finalCertification }) => type === 'quiz' && finalCertification);
+  const unitKeys = _course.getUnitKeys();
 
-  const userFinalAttempts = _user.quizAttempts.filter(({ finalCertification }) => finalCertification);
+  const userFinalAttempts = _user.quizAttempts.filter(({ finalCertification, unitId }) => finalCertification && unitKeys.includes(unitId));
   const certificateAvailable = courseFinalAttempts.length === userFinalAttempts.length;
   if (!certificateAvailable) throw new Error('Sertificate not awailable');
 

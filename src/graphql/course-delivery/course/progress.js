@@ -15,7 +15,8 @@ const CourseUserProgressType = _.Object({
   name: 'CourseUserProgress',
   fields: {
     units: { type: _.NonNull(_.List(_.NonNull(UnitUserProgressType))) },
-    certificateAvailable: { type: _.Boolean }
+    certificateAvailable: { type: _.Boolean },
+    userData: { type: _.JSON }
   }
 });
 
@@ -28,9 +29,10 @@ export default {
     const user = await findUser(userId, db);
     const course = await findCourse(courseId, db);
     const courseFinalAttempts = course.units.filter(({ type, finalCertification }) => type === 'quiz' && finalCertification);
+    const unitKeys = course.getUnitKeys();
 
     if (user.role === 'student') {
-      const userFinalAttempts = user.quizAttempts.filter(({ finalCertification }) => finalCertification);
+      const userFinalAttempts = user.quizAttempts.filter(({ finalCertification, unitId }) => finalCertification && unitKeys.includes(unitId));
       const certificateAvailable = courseFinalAttempts.length === userFinalAttempts.length;
       return [{
         units: userFinalAttempts,
@@ -38,9 +40,52 @@ export default {
       }];
     }
 
-    // if (userId) await verifyAdminRole(user, db);
-    // const _userId = userId || user.id;
+    const users = await db.query(`
+      SELECT id, _data AS data, get_value(picture_value_id) AS picture, email FROM users
+      JOIN (
+        SELECT user_id, course_id FROM free_course_enrollments
+        UNION ALL
+        SELECT user_id, course_id FROM paid_course_purchases WHERE callback_status='success'
+      ) AS enrollments ON users.id = user_id
+      WHERE course_id IN (${courseId})
+    `);
 
-    // return await getUserProgress(db, courseId, _userId);
+    let courseAttempts = await db.query(`
+      SELECT
+        unit_id unitId,
+        user_id userId,
+        start_date startDate,
+        last_submitted_reply lastSubmittedReply,
+        replies_count repliesCount,
+        score,
+        feedback
+      FROM quiz_attempts
+      WHERE
+        unit_id IN (${unitKeys.join(', ')})
+    `);
+    courseAttempts = courseAttempts.filter(({ unitId }) => unitKeys.includes(unitId));
+
+    const userFinalAttemptsArray = [];
+    for (const _user of users) {
+      const userFinalAttempts = courseAttempts.filter(({ userId: _userId }) => _user.id === _userId).map(val => ({ ...val, ...courseFinalAttempts.find(({ id }) => id === val.unitId) }));
+      const certificateAvailable = courseFinalAttempts.length === userFinalAttempts.length; 
+      const userData = JSON.parse(_user.data);
+      userData.picture = _user.picture;
+      userData.email = _user.email;
+
+      let allScores = 0;
+      let maxAllScores = 0;
+      if (userFinalAttempts) for (const unitProgress of userFinalAttempts) {
+        //if (!unitProgress.finalCertification) continue;
+        allScores += unitProgress.score;
+        maxAllScores += unitProgress.maxScore;
+      }
+      userData.allScores = allScores;
+      userData.maxAllScores = maxAllScores;
+
+      userFinalAttemptsArray.push({ units: userFinalAttempts, certificateAvailable, userData });
+    }
+
+    return userFinalAttemptsArray;
   }
 };
