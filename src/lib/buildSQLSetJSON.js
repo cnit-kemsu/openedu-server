@@ -8,13 +8,13 @@ export function buildSQLSetJSON(columnName, _jsonValue) {
   if (keys.length === 0) return;
 
   let _values = '';
-  const _params = [];
+  //const _params = [];
   for (const key of keys) {
     if (jsonValue[key] !== undefined) {
-      _values += `, '$.${key}', ?`;
-      _params.push(jsonValue[key]);
+      _values += `, '$.${key}', ${jsonValue[key]}`;
+      //_params.push(jsonValue[key]);
     }
   }
 
-  return [`${columnName} = JSON_SET(IF(${columnName} IS NULL, '{}', ${columnName})${_values})`, ..._params];
+  return `${columnName} = JSON_SET(IF(${columnName} IS NULL, '{}', ${columnName})${_values})`;
 }

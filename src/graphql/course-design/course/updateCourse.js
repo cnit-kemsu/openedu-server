@@ -15,7 +15,7 @@ export default {
   async resolve(obj, { id, ...inputArgs }, { userId, db }) {
     await verifyAdminRole(userId, db);
 
-    if (inputArgs.data != null) inputArgs.data = JSON.stringify(inputArgs.data);
+    //if (inputArgs.data != null) inputArgs.data = JSON.stringify(inputArgs.data);
 
     try {
       

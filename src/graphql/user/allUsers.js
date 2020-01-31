@@ -15,6 +15,7 @@ export default {
 
     //if (search.keys !== undefined) if (search.keys.length === 0) return [];
 
+    if (search.keys?.length === 0) return [];
     const electExprList = sqlBuilder.buildSelectExprList(fields);
     const whereClause = await sqlBuilder.buildWhereClause(search);
     return await db.query(`

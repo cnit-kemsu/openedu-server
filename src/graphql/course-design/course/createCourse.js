@@ -14,13 +14,13 @@ export default {
   async resolve(obj, inputArgs, { userId, db }) {
     await verifyAdminRole(userId, db);
 
-    if (inputArgs.data != null) inputArgs.data = JSON.stringify(inputArgs.data);
+    //if (inputArgs.data != null) inputArgs.data = JSON.stringify(inputArgs.data);
 
     try {
       
       await db.beginTransaction();
 
-      const assignmentList = await sqlBuilder.buildAssignmentList({ ...inputArgs, creatorId: user.id }, { db });
+      const assignmentList = await sqlBuilder.buildAssignmentList({ ...inputArgs, creatorId: userId }, { db });
       const { insertId } = await db.query(`INSERT INTO course_design_templates SET ${assignmentList}`);
 
       await db.commit();

@@ -1,5 +1,5 @@
 import { types as _ } from '@kemsu/graphql-server';
-import { verifyUserRole } from '@lib/authorization';
+import { findUser } from '@lib/authorization';
 import UserType from './UserType';
 import { sqlBuilder } from './_shared';
 
@@ -12,9 +12,11 @@ export default {
     picture: { type: _.JSON }
   },
   async resolve(obj, { firstname, lastname, middlename, picture }, { userId, db }) {
-    await verifyUserRole(userId, db);
+    //await verifyUserRole(userId, db);
+    if (!userId) throw new Error('Unauthorized');
 
-    const data = { firstname, lastname, middlename };
+    let data = { firstname, lastname, middlename };
+    if (firstname === undefined && lastname === undefined && middlename === undefined) data = undefined;
     try {
 
       await db.beginTransaction();

@@ -237,7 +237,7 @@ BEGIN
 		
 		FOR _current_subsection IN (SELECT id, _name, summary_value_id, access_period, expiration_period, sequence_number FROM course_design_subsections WHERE section_id = _current_section.id) DO
 			
-			INSERT INTO course_delivery_subsections (section_id, _name, summary_value_id, access_period, expiration_period, sequence_number) VALUES (
+			INSERT INTO course_delivery_subsections (section_id, _name, summary_value_id, access_date, expiration_date, sequence_number) VALUES (
 				v_section_insert_id,
 				_current_subsection._name,
 				_increase_value_total_attachments(_current_subsection.summary_value_id),

@@ -1,5 +1,6 @@
 import { types as _, SQLBuilder, escapePattern, _escape, jsonToString, getJSON } from '@kemsu/graphql-server';
 import { insertFilesOfValue } from '@lib/insertFilesOfValue';
+import { buildSQLSetJSON } from '@lib/buildSQLSetJSON';
 import RoleEnumType from './RoleEnumType';
 
 const selectExprListBuilder = {
@@ -29,7 +30,11 @@ const whereConditionBuilder = {
 };
 
 const assignmentListBuilder = {
-  data: value => `_data = ${jsonToString(value)}`,
+  data: ({ firstname, lastname, middlename } = {}) => `${buildSQLSetJSON('_data', {
+    firstname: firstname != null ? _escape(firstname) : undefined,
+    lastname: lastname != null ? _escape(lastname) : undefined,
+    middlename: middlename != null ? _escape(middlename) : undefined
+  })}`,
   picture: async(value, { db }) => await insertFilesOfValue(db, value)
     |> `picture_value_id = set_value(picture_value_id, ${jsonToString(value)}, ${#})`
 };

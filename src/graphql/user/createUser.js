@@ -1,4 +1,4 @@
-import { types as _, GraphQLError, ClientInfo } from '@kemsu/graphql-server';
+import { types as _, GraphQLError, ClientInfo, _escape } from '@kemsu/graphql-server';
 import { verifyAdminRole } from '@lib/authorization';
 import { generatePasskey } from '@lib/generatePasskey';
 import { sendEmail } from '@lib/sendEmail';
@@ -17,9 +17,9 @@ export default {
     const passkey = generatePasskey(email);
     try {
 
-      const { insertId } = await db.query(`INSERT INTO users (role, email) values (${role}, ${email})`);
+      const { insertId } = await db.query(`INSERT INTO users (role, email) values ('${role}', ${_escape(email)})`);
 
-      db.query(`INSERT INTO unverified_accounts (user_id, passkey) values (${insertId}, ${passkey})`);
+      db.query(`INSERT INTO unverified_accounts (user_id, passkey) values (${insertId}, ${_escape(passkey)})`);
 
       sendEmail(
         email,
