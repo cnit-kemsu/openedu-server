@@ -1,8 +1,9 @@
-import { sitename, url } from '../config';
+import { sitename, url, zoom } from '../config';
 import { pool } from './dbPool';
 import { sendEmail } from './sendEmail';
 import { toWrittenAmount } from './toWrittenAmount';
 import { createPdf } from './createPdf';
+import { findUser, findCourse } from '@lib/authorization';
 
 function createReceiptContent(course, user, { trans_date, order_id, ref_set: { auth_code, ret_ref_number }, source_card: { masked_number }, amount: { value } }) {
   return `
@@ -10,6 +11,7 @@ function createReceiptContent(course, user, { trans_date, order_id, ref_set: { a
       <head>
       <style>
         body {
+          ${zoom ? `zoom: ${zoom/1.5};` : ''}
           font-family: Tahoma;
           padding: 40px;
         }
@@ -90,6 +92,10 @@ export async function paymentCallback(req, res, next) {
       content: createReceiptContent(course, user, info) |> await createPdf(#, { format: 'A4', width: '350px', height: '500px' })
     };
     sendEmail(user.email, emailSubject, emailHTML, [receiptFile]);
+
+    const _user = await findUser(user.id, db);
+    const _course = await findCourse(course.id, db);
+    user.pushCourseKey(course.id);
 
   } finally {
     if (db !== undefined) db.end();

@@ -164,6 +164,7 @@ function createSertificateContent(course, user, { sertificateNumber, deliveryDat
         }
         #name {
           width: 100%;
+          display: block;
           text-align: center;
           font-size: 28px;
           font-weight: bold;
@@ -343,15 +344,16 @@ export async function sendSertificate(db, userId, courseId) {
   const _user = await findUser(userId, db);
   const _course = await findCourse(courseId, db);
   const courseFinalAttempts = _course.units.filter(({ type, finalCertification }) => type === 'quiz' && finalCertification);
-  const unitKeys = _course.getUnitKeys();
+  const unitKeys = courseFinalAttempts.map(({ id }) => id);
 
-  const userFinalAttempts = _user.quizAttempts.filter(({ finalCertification, unitId }) => finalCertification && unitKeys.includes(unitId));
+  const userFinalAttempts = _user.quizAttempts.filter(({ unitId }) => unitKeys.includes(unitId));
+  const _userFinalAttempts = courseFinalAttempts.map(({ id, ...other }) => ({ id, ...other, ...userFinalAttempts.find(a => a.unitId === id) }));
   const certificateAvailable = courseFinalAttempts.length === userFinalAttempts.length;
   if (!certificateAvailable) throw new Error('Sertificate not awailable');
 
 
   let maxScore = 0, totalScore = 0;
-  for (const unitProgress of userFinalAttempts) {
+  for (const unitProgress of _userFinalAttempts) {
     //if (!quiz.finalCertification) continue;
     maxScore += unitProgress.maxScore;
     totalScore += unitProgress.score;

@@ -49,6 +49,7 @@ const assignmentListBuilder = {
   startDate: value => `start_date = ${_escape(value)}`,
   enrollmentEndDate: value => `enrollment_end_date = ${_escape(value)}`,
   data: value => `_data = ${jsonToString(value)}`,
+  price: value => `price = ${value}`,
 
   summary: value => `summary_value_id = set_value(summary_value_id, ${_escape(value)}, NULL)`,
   async description(value, { db }) {

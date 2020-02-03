@@ -29,13 +29,14 @@ export default {
     const user = await findUser(userId, db);
     const course = await findCourse(courseId, db);
     const courseFinalAttempts = course.units.filter(({ type, finalCertification }) => type === 'quiz' && finalCertification);
-    const unitKeys = course.getUnitKeys();
+    const unitKeys = courseFinalAttempts.map(({ id }) => id);
 
     if (user.role === 'student') {
-      const userFinalAttempts = user.quizAttempts.filter(({ finalCertification, unitId }) => finalCertification && unitKeys.includes(unitId));
+      const userFinalAttempts = user.quizAttempts.filter(({ unitId }) => unitKeys.includes(unitId));
+      const _userFinalAttempts = courseFinalAttempts.map(({ id, ...other }) => ({ id, ...other, ...userFinalAttempts.find(a => a.unitId === id) }));
       const certificateAvailable = courseFinalAttempts.length === userFinalAttempts.length;
       return [{
-        units: userFinalAttempts,
+        units: _userFinalAttempts,
         certificateAvailable
       }];
     }
@@ -70,7 +71,7 @@ export default {
       const userFinalAttempts = courseAttempts.filter(({ userId: _userId }) => _user.id === _userId).map(val => ({ ...val, ...courseFinalAttempts.find(({ id }) => id === val.unitId) }));
       const certificateAvailable = courseFinalAttempts.length === userFinalAttempts.length; 
       const userData = JSON.parse(_user.data);
-      userData.picture = _user.picture;
+      userData.picture = _user.picture != null ? JSON.parse(_user.picture) : null;
       userData.email = _user.email;
 
       let allScores = 0;
@@ -83,7 +84,8 @@ export default {
       userData.allScores = allScores;
       userData.maxAllScores = maxAllScores;
 
-      userFinalAttemptsArray.push({ units: userFinalAttempts, certificateAvailable, userData });
+      const _userFinalAttempts = courseFinalAttempts.map(({ id, ...other }) => ({ id, ...other, ...userFinalAttempts.find(a => a.unitId === id) }));
+      userFinalAttemptsArray.push({ units: _userFinalAttempts, certificateAvailable, userData });
     }
 
     return userFinalAttemptsArray;

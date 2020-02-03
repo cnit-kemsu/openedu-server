@@ -7,7 +7,7 @@ function finalizeAttempt(a) {
   delete a.data;
   a.unitName = unitName;
   a.finalCertification = finalCertification;
-  a.maxScore = maxScore;
+  //a.maxScore = maxScore;
 }
 
 export default class User extends CachedValue {
