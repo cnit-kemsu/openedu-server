@@ -399,11 +399,11 @@ END;
 CREATE OR REPLACE FUNCTION is_enrolled_to_course(p_user_id INT UNSIGNED, p_course_id INT UNSIGNED) RETURNS BOOLEAN
 BEGIN
 	RETURN (
-		(SELECT 1 FROM free_course_enrollments WHERE user_id = p_user_id AND course_id = p_course_id)
+		SELECT 1 FROM free_course_enrollments WHERE user_id = p_user_id AND course_id = p_course_id
 		UNION ALL
-		(SELECT 1 FROM paid_course_purchases WHERE user_id = p_user_id AND course_id = p_course_id AND callback_status = 'success')
+		SELECT 1 FROM paid_course_purchases WHERE user_id = p_user_id AND course_id = p_course_id AND callback_status = 'success'
 		UNION ALL
-		(SELECT 1 FROM instructor_assignments WHERE user_id = p_user_id AND course_id = p_course_id AND accepted = TRUE)
+		SELECT 1 FROM instructor_assignments WHERE user_id = p_user_id AND course_id = p_course_id AND accepted = TRUE
 		LIMIT 1
 	);
 END;

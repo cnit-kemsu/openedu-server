@@ -21,7 +21,7 @@ export default {
       'Неверный проверочный ключ',
       ClientInfo.UNMET_CONSTRAINT
     );
-    db.query(`UPDATE users SET pwdhash = ${hashPassword(password)|> escape} WHERE id = ${user.id}`);
+    db.query(`UPDATE users SET pwdhash = ${hashPassword(password)|> _escape} WHERE id = ${user.id}`);
     db.query(`DELETE FROM unverified_accounts WHERE user_id = ${user.id}`);
     
     return signBearer({ ...user, verified: true, complete: false }, jwtSecret);

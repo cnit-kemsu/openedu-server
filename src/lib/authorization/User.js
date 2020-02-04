@@ -42,7 +42,7 @@ export default class User extends CachedValue {
       user.quizAttempts?.forEach(finalizeAttempt);
 
     } else if (user.role === 'instructor' || user.role === 'admin') {
-      courses = await db.query(`SELECT course_id key FROM instructor_assignments WHERE user_id = ${this.key}`);
+      courses = await db.query(`SELECT course_id \`key\` FROM instructor_assignments WHERE user_id = ${this.key}`);
     }
     if (courses !== undefined) user.courseKeys = courses.map(c => c.key);
     
