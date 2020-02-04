@@ -51,7 +51,7 @@ export default {
       WHERE course_id IN (${courseId})
     `);
 
-    let courseAttempts = await db.query(`
+    let courseAttempts = unitKeys.length === 0 ? [] : await db.query(`
       SELECT
         unit_id unitId,
         user_id userId,

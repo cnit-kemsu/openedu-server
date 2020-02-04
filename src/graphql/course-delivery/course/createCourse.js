@@ -14,11 +14,13 @@ export default {
   async resolve(obj, { templateId, startDate = null, enrollmentEndDate = null, price = null, instructorKeys }, { userId, db }) {
     await verifyAdminRole(userId, db);
 
+    const _startDate = startDate ? `'${startDate}'` : null;
+    const _enrollmentEndDate = enrollmentEndDate ? `'${enrollmentEndDate}'` : null;
     try {
       
       await db.beginTransaction();
 
-      const [{ insertId }] = await db.query(`SELECT create_course_delivery_instance(${templateId}, ${userId}, '${startDate}', '${enrollmentEndDate}', ${price}) insertId`);
+      const [{ insertId }] = await db.query(`SELECT create_course_delivery_instance(${templateId}, ${userId}, ${_startDate}, ${_enrollmentEndDate}, ${price}) insertId`);
 
       await assignInstructors(db, insertId, instructorKeys);
 
