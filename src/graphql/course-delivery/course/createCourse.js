@@ -16,11 +16,12 @@ export default {
 
     const _startDate = startDate ? `'${startDate}'` : null;
     const _enrollmentEndDate = enrollmentEndDate ? `'${enrollmentEndDate}'` : null;
+    const _price = price ? price : null;
     try {
       
       await db.beginTransaction();
 
-      const [{ insertId }] = await db.query(`SELECT create_course_delivery_instance(${templateId}, ${userId}, ${_startDate}, ${_enrollmentEndDate}, ${price}) insertId`);
+      const [{ insertId }] = await db.query(`SELECT create_course_delivery_instance(${templateId}, ${userId}, ${_startDate}, ${_enrollmentEndDate}, ${_price}) insertId`);
 
       await assignInstructors(db, insertId, instructorKeys);
 
