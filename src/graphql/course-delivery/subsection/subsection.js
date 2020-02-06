@@ -18,7 +18,7 @@ export default {
         if (user.role === 'student') throw new GraphQLError(`You are not enrolled in the course containing the subsection`, ClientInfo.UNMET_CONSTRAINT);
         else if (user.role === 'instructor') throw new GraphQLError(`You are not assigned as an instructor to the course containing the subsection`, ClientInfo.UNMET_CONSTRAINT);
       }
-      if (user.role === 'student' && !subsection.isAccessible()) throw new GraphQLError(`Access to the subsection has not yet been opened`, ClientInfo.UNMET_CONSTRAINT);
+      if (user.role === 'student' && !subsection.isAccessible(db)) throw new GraphQLError(`Access to the subsection has not yet been opened`, ClientInfo.UNMET_CONSTRAINT);
     }
 
     // delete fields.id;

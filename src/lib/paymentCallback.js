@@ -95,7 +95,7 @@ export async function paymentCallback(req, res, next) {
 
     const _user = await findUser(user.id, db);
     const _course = await findCourse(course.id, db);
-    user.pushCourseKey(course.id);
+    _user.pushCourseKey(course.id);
 
   } finally {
     if (db !== undefined) db.end();

@@ -14,12 +14,12 @@ export default {
     const unit = await findUnit(id, db);
     if (user.role !== 'superuser' && user.role !== 'admin') {
       
-      const subsection = await unit.getSubsection();
+      const subsection = await unit.getSubsection(db);
       if (!user.hasCourseKey(subsection.courseId)) {
         if (user.role === 'student') throw new GraphQLError(`You are not enrolled in the course containing the unit`, ClientInfo.UNMET_CONSTRAINT);
         else if (user.role === 'instructor') throw new GraphQLError(`You are not assigned as an instructor to the course containing the unit`, ClientInfo.UNMET_CONSTRAINT);
       }
-      if (user.role === 'student' && await !unit.isAccessible()) throw new GraphQLError(`Access to the subsection containing the unit has not yet been opened`, ClientInfo.UNMET_CONSTRAINT);
+      if (user.role === 'student' && await !unit.isAccessible(db)) throw new GraphQLError(`Access to the subsection containing the unit has not yet been opened`, ClientInfo.UNMET_CONSTRAINT);
     }
 
     // delete fields.id;

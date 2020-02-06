@@ -40,9 +40,9 @@ export default class Unit extends CachedValue {
     return course;
   }
 
-  async isAccessible() {
-    return await this.getSubsection()
-    |> #.isAccessible();
+  async isAccessible(db) {
+    return await this.getSubsection(db)
+    |> #.isAccessible(db);
   }
 }
 

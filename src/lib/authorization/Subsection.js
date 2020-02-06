@@ -24,11 +24,11 @@ export default class Subsection extends CachedValue {
     return this._course;
   }
 
-  isAccessible() {
+  isAccessible(db) {
     return this.accessDate == null || this.accessDate >= new Date();
   }
 
-  isExpired() {
+  isExpired(db) {
     return this.expirationDate != null && this.expirationDate < new Date();
   }
 }

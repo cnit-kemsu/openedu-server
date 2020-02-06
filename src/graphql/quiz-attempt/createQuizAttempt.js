@@ -15,8 +15,8 @@ export default {
     const unit = await findUnit(unitId, db);
     const subsection = await unit.getSubsection(db);
     if (!user.hasCourseKey(subsection.courseId)) throw new GraphQLError(`You are not enrolled in the course containing the quiz`);
-    if (!subsection.isAccessible()) throw new GraphQLError(`Access to the subsection containing the quiz has not yet been opened`);
-    if (subsection.isExpired()) throw new GraphQLError(`Access to the subsection containing the quiz has expired`);
+    if (!subsection.isAccessible(db)) throw new GraphQLError(`Access to the subsection containing the quiz has not yet been opened`);
+    if (subsection.isExpired(db)) throw new GraphQLError(`Access to the subsection containing the quiz has expired`);
 
     const startDate = new Date();
     let dataValueId;
