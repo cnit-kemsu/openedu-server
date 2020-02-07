@@ -12,7 +12,7 @@ export default {
     await verifyAdminRole(userId, db);
 
     const selectExprList = sqlBuilder.buildSelectExprList(fields);
-    return await db.query(`SELECT ${selectExprList} FROM course_pass_tokens WHERE id = ${id}`)
+    return await db.query(`SELECT ${selectExprList} FROM access_tokens WHERE id = ${id}`)
     |> #[0];
   }
 } |> upgradeResolveFn;

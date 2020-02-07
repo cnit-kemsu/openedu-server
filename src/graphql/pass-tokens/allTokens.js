@@ -14,7 +14,7 @@ export default {
 
     const selectExprList = sqlBuilder.buildSelectExprList(fields);
     try {
-      return await db.query(`SELECT ${selectExprList} FROM course_pass_tokens LIMIT ${limit} OFFSET ${offset}`);
+      return await db.query(`SELECT ${selectExprList} FROM access_tokens LIMIT ${limit} OFFSET ${offset}`);
     }
     catch (error) {
       throw error;

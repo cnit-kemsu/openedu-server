@@ -2,17 +2,16 @@ import { SQLBuilder, _escape, jsonToString } from '@kemsu/graphql-server';
 
 const selectExprListBuilder = {
   id: 'id',
-  courseId: 'course_id',
+  name: '_name',
   comments: 'comments',
-  emails: 'emails',
 
-  course: ['id']
+  courseKeys: `(SELECT CONCAT('[', GROUP_CONCAT(course_id SEPARATOR ','), ']') FROM access_token_course_attachments WHERE access_token_id = id) AS courseKeys`,
+  emails: `(SELECT CONCAT('[', GROUP_CONCAT('"', email, '"' SEPARATOR ','), ']') FROM access_token_user_attachments WHERE access_token_id = id) AS emails`
 };
 
 const assignmentListBuilder = {
-  courseId: value => `course_id = ${value}`,
-  comments: value => `comments = ${_escape(value)}`,
-  emails: value => `emails = ${jsonToString(value)}`,
+  name: value => `_name = ${_escape(value)}`,
+  comments: value => `comments = ${_escape(value)}`
 };
 
 export const sqlBuilder = new SQLBuilder(

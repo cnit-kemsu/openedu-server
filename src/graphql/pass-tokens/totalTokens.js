@@ -6,7 +6,7 @@ export default {
   async resolve(obj, search, { userId, db }) {
     await verifyAdminRole(userId, db);
 
-    return await db.query(`SELECT COUNT(1) count FROM course_pass_tokens`)
+    return await db.query(`SELECT COUNT(1) count FROM access_tokens`)
     |> #[0].count;
   }
 };
