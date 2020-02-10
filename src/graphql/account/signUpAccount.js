@@ -1,7 +1,7 @@
 import { types as _, hashPassword, signBearer, GraphQLError, ClientInfo, _escape, jsonToString } from '@kemsu/graphql-server';
 import { generatePasskey } from '@lib/generatePasskey';
 import { sendEmail } from '@lib/sendEmail';
-import { jwtSecret, sitename } from '../../config';
+import { jwtSecret, sitename } from '../../../config';
 
 export default {
   type: _.NonNull(_.String),

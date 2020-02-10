@@ -2,7 +2,7 @@ import { types as _, GraphQLError, ClientInfo, _escape } from '@kemsu/graphql-se
 import { verifyAdminRole } from '@lib/authorization';
 import { generatePasskey } from '@lib/generatePasskey';
 import { sendEmail } from '@lib/sendEmail';
-import { sitename, url } from '../../config';
+import { sitename, url } from '../../../config';
 import RoleInputEnumType from './RoleInputEnumType';
 
 export default {

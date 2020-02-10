@@ -4,7 +4,7 @@ import {
   url,
   devUrl,
   payment
-} from '../config';
+} from '../../config';
 const _url = devUrl || url;
 
 function getRightFormatNowDate(date) {

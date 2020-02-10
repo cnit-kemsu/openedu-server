@@ -6,7 +6,9 @@ export default {
   mode: 'production',
   target: 'node',
 
-  entry: './src/index.js',
+  entry: {
+    main: './src/index.js',
+  },
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].js',
@@ -49,6 +51,10 @@ export default {
     function(context, request, callback) {
       if (request === './config') callback(null, `require('./config')`);
       else if (request === '../config') callback(null, `require('./config')`);
+      else if (request === '../../config') callback(null, `require('./config')`);
+      else if (request === '../../../config') callback(null, `require('./config')`);
+      else if (request === '../../../../config') callback(null, `require('./config')`);
+      else if (request === '../../../../../config') callback(null, `require('./config')`);
       else callback();
     },
     nodeExternals({

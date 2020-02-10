@@ -2,7 +2,7 @@
 //import fs from 'fs';
 import mariadb from 'mariadb';
 import { hashPassword } from '@kemsu/graphql-server';
-const config = require('./config');
+const config = require('../config');
 
 //import { dbConfig, superUser } from './config';
 

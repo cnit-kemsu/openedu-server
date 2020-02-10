@@ -1,6 +1,6 @@
 import { types as _, GraphQLError, ClientInfo, signBearer } from '@kemsu/graphql-server';
 import { findUser } from '@lib/authorization';
-import { jwtSecret } from '../../config';
+import { jwtSecret } from '../../../config';
 
 export default {
   type: _.NonNull(_.String),

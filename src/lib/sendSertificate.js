@@ -1,5 +1,5 @@
 import path from 'path';
-import { sitename, zoom } from '../config';
+import { sitename, zoom } from '../../config';
 import { sendEmail } from './sendEmail';
 import { toWrittenCrun } from './toWrittenCrun';
 import { createPdf } from './createPdf';

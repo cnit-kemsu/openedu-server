@@ -1,4 +1,4 @@
-import { sitename, url, zoom } from '../config';
+import { sitename, url, zoom } from '../../config';
 import { pool } from './dbPool';
 import { sendEmail } from './sendEmail';
 import { toWrittenAmount } from './toWrittenAmount';

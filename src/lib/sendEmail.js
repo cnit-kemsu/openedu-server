@@ -1,5 +1,5 @@
 import sendmail from 'sendmail';
-import { emailConfig } from '../config';
+import { emailConfig } from '../../config';
 
 const { from, dkim } = emailConfig;
 

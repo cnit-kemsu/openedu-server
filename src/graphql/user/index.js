@@ -27,6 +27,7 @@ export default {
   },
   loaders: {
     user_byId: new Loader(loaders.byId, collation.find('id')),
+    user_byEmail: new Loader(loaders.byEmail, collation.find('email')),
     user_instructor_byCourseId: new Loader(loaders.instructor_byCourseId, collation.filter('courseId')),
     user_student_byCourseId: new Loader(loaders.student_byCourseId, collation.filter('courseId'))
   }

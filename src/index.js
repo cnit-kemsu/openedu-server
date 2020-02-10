@@ -1,6 +1,6 @@
 import express from 'express';
 import { graphqlResolver, userInfo, handleUncaughtErrors, errorLogger } from '@kemsu/graphql-server';
-import { jwtSecret } from './config';
+import { jwtSecret, sitename, url } from '../config';
 import { schema, loaders } from './graphql';
 import path from 'path';
 import bodyParser from 'body-parser';
@@ -26,6 +26,9 @@ path.resolve('./public') |> express.static |> app.use;
 
 userInfo(jwtSecret) |> app.use(#);
 
+// console.log(sitename);
+// console.log(url);
+
 async function graphqlOptions({ _user }) {
   const db = await pool.getConnection();
   return [{
@@ -45,8 +48,10 @@ app.post('/payment-callback', paymentCallback);
 app.post('/send-sertificate/:userId/:courseId', sendSertificate);
 
 if (process.env.NODE_ENV === 'production') app.get('/*', function(req, res) { 
-  const _path = path.resolve('./public/index.html');
-  res.sendFile(_path);
+  if (!res.headersSent) {
+    const _path = path.resolve('./public/index.html');
+    res.sendFile(_path);
+  }
 });
 
 app.use(errorLogger);

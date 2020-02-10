@@ -1,9 +1,15 @@
 import { types as _ } from '@kemsu/graphql-server';
 import { sqlBuilder } from './_shared';
 
-function byId(keys, { db }, fields) {
+async function byId(keys, { db }, fields) {
   const selectExprList = sqlBuilder.buildSelectExprList({ ...fields, id: null });
-  const whereClause = sqlBuilder.buildWhereClause({ keys });
+  const whereClause = await sqlBuilder.buildWhereClause({ keys });
+  return db.query(`SELECT ${selectExprList} FROM users ${whereClause}`);
+}
+
+async function byEmail(emails, { db }, fields) {
+  const selectExprList = sqlBuilder.buildSelectExprList({ ...fields, id: null });
+  const whereClause = await sqlBuilder.buildWhereClause({ emails });
   return db.query(`SELECT ${selectExprList} FROM users ${whereClause}`);
 }
 
@@ -33,6 +39,7 @@ function student_byCourseId(courseKeys, { db }, fields) {
 
 export default {
   byId,
+  byEmail,
   instructor_byCourseId,
   student_byCourseId
 };

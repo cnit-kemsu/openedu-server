@@ -1,5 +1,5 @@
 import { types as _, GraphQLError, ClientInfo, hashPassword, signBearer, _escape } from '@kemsu/graphql-server';
-import { jwtSecret } from '../../config';
+import { jwtSecret } from '../../../config';
 
 export default {
   type: _.NonNull(_.String),

@@ -5,8 +5,11 @@ const selectExprListBuilder = {
   name: '_name',
   comments: 'comments',
 
-  courseKeys: `(SELECT CONCAT('[', GROUP_CONCAT(course_id SEPARATOR ','), ']') FROM access_token_course_attachments WHERE access_token_id = id) AS courseKeys`,
-  emails: `(SELECT CONCAT('[', GROUP_CONCAT('"', email, '"' SEPARATOR ','), ']') FROM access_token_user_attachments WHERE access_token_id = id) AS emails`
+  courseKeys: `(SELECT CONCAT('[', GROUP_CONCAT(course_id SEPARATOR ','), ']') FROM access_token_course_attachments WHERE access_token_id = id)`,
+  emails: `(SELECT CONCAT('[', GROUP_CONCAT('"', email, '"' SEPARATOR ','), ']') FROM access_token_user_attachments WHERE access_token_id = id)`,
+
+  courses: ['id'],
+  users: ['id']
 };
 
 const assignmentListBuilder = {

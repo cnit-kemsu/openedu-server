@@ -22,6 +22,7 @@ function searchWord(word) {
 const mapRole = value => `'${value}'`;
 const whereConditionBuilder = {
   keys: values => `id IN (${values.join(', ')})`,
+  emails: values => `email IN (${values.map(email => '"' + email + '"').join(', ')})`,
   searchText: text => text
     .trim().replace(/\s{2,}/g, ' ').split(' ')
     .map(searchWord)

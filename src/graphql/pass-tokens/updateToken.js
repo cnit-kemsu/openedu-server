@@ -14,19 +14,23 @@ export default {
   async resolve(obj, { id, courseKeys, emails, ...inputArgs }, { userId, db }) {
     await verifyAdminRole(userId, db);
 
-    const _courseKeys = courseKeys && courseKeys || [];
-    const _emails = emails && emails || [];
+    const _courseKeys = courseKeys !== null && courseKeys || [];
+    const _emails = emails !== null && emails || [];
     try {
 
       const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs, { db });
-      if (assignmentList === '') return 0;
-      const { affectedRows } = await db.query(`UPDATE access_tokens SET ${assignmentList} WHERE id = ${id}`);
-      await db.query(`set_access_token_attachments(${id}, ${jsonToString(_courseKeys)}, ${jsonToString(_emails)})`);
+      if (assignmentList === '' && !_courseKeys && !_emails) return 0;
 
+      await db.beginTransaction();
+      const { affectedRows } = await db.query(`UPDATE access_tokens SET ${assignmentList} WHERE id = ${id}`);
+      if (_courseKeys && _emails) await db.query(`CALL set_access_token_attachments(${id}, ${jsonToString(_courseKeys)}, ${jsonToString(_emails)})`);
+
+      await db.commit();
       return affectedRows;
 
     } catch(error) {
 
+      await db.rollback();
       throw error;
 
     }

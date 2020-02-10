@@ -16,7 +16,7 @@ BEGIN
 	
 	FOR _index IN 0 .. JSON_LENGTH(p_course_id_array) - 1 DO
 		SET v_course_id = JSON_VALUE(p_course_id_array, CONCAT('$[', _index, ']'));
-		IF NOT EXISTS(SELECT 1 FROM access_token_course_attachments WHERE course_id = v_course_id) THEN
+		IF NOT EXISTS(SELECT 1 FROM access_token_course_attachments WHERE access_token_id = p_id AND course_id = v_course_id) THEN
 			INSERT INTO access_token_course_attachments SET access_token_id = p_id, course_id = v_course_id;
 		END IF;
 	END FOR;
@@ -29,7 +29,7 @@ BEGIN
 	
 	FOR _index IN 0 .. JSON_LENGTH(p_email_array) - 1 DO
 		SET v_email = JSON_VALUE(p_email_array, CONCAT('$[', _index, ']'));
-		IF NOT EXISTS(SELECT 1 FROM access_token_user_attachments WHERE email = v_email) THEN
+		IF NOT EXISTS(SELECT 1 FROM access_token_user_attachments WHERE access_token_id = p_id AND email = v_email) THEN
 			INSERT INTO access_token_user_attachments SET access_token_id = p_id, email = v_email, user_id = (SELECT id FROM users WHERE email = v_email);
 		END IF;
 	END FOR;

@@ -1,5 +1,5 @@
 node_modules
 package-lock.json
 dist
-src/config.js
-src/dkim-private.pem
+config.js
+dkim-private.pem

@@ -1,5 +1,5 @@
 import { types as _, verifyPassword, GraphQLError, ClientInfo, signBearer, _escape } from '@kemsu/graphql-server';
-import { jwtSecret } from '../../config';
+import { jwtSecret } from '../../../config';
 import AuthTokenType from './AuthTokenType';
 
 export default {

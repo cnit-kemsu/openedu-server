@@ -1,13 +1,12 @@
 import { types as _, resolveJSON, upgradeResolveFn } from '@kemsu/graphql-server';
-//import CourseType from '../course-delivery/course/CourseType';
+import CourseType from '../course-delivery/course/CourseType';
+import UserType from '../user/UserType';
 
 export default _.Object({
-  name: 'CourseDesignTemplate',
+  name: 'PassToken',
   fields: {
 
     id: { type: _.NonNull(_.Int) },
-    courseId: { type: _.NonNull(_.Int) },
-    emails: { type: _.NonNull(_.NonNull(_.String)), resolve: ({ emails }) => resolveJSON(emails) },
     comments: { type: _.String },
 
     courseKeys: {
@@ -18,14 +17,26 @@ export default _.Object({
     emails: {
       type: _.NonNull(_.List(_.NonNull(_.String))),
       resolve: ({ emails }) => resolveJSON(emails)
-    }
+    },
 
-    // courses: {
-    //   type: CourseType,
-    //   async resolve({ courseId }, {}, { loaders }, { fields }) {
-    //     return await loaders.courseDelivery_byCourseId.loadMany(courseId, { ...fields });
-    //   }
-    // } |> upgradeResolveFn
+    courses: {
+      type: _.List(CourseType),
+      async resolve({ courseKeys }, {}, { loaders }, { fields }) {
+        if (!courseKeys) return [];
+        const res = await loaders.courseDelivery_instance_byId.loadMany(resolveJSON(courseKeys), { ...fields });
+        return res;
+      }
+    } |> upgradeResolveFn,
+
+    users: {
+      type: _.List(UserType),
+      async resolve({ emails }, {}, { loaders }, { fields }) {
+        if (!emails) return [];
+        const _emails = resolveJSON(emails);
+        const res = await loaders.user_byEmail.loadMany(_emails, { ...fields });
+        return _emails.map(email => ({ email, ...res.find(user => user?.email === email) || { id: -1 } }));
+      }
+    } |> upgradeResolveFn
 
   }
 });
