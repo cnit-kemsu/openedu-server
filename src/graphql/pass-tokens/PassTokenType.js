@@ -7,6 +7,7 @@ export default _.Object({
   fields: {
 
     id: { type: _.NonNull(_.Int) },
+    name: { type: _.String },
     comments: { type: _.String },
 
     courseKeys: {

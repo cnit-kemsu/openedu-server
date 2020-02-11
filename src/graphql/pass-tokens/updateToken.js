@@ -6,7 +6,7 @@ export default {
   type: _.NonNull(_.Int),
   args: {
     id: { type: _.NonNull(_.Int) },
-    name: { type: _.NonNull(_.String) },
+    name: { type: _.String },
     comments: { type: _.String },
     courseKeys: { type: _.List(_.NonNull(_.Int)) },
     emails: { type: _.List(_.NonNull(_.String)) }
@@ -14,19 +14,22 @@ export default {
   async resolve(obj, { id, courseKeys, emails, ...inputArgs }, { userId, db }) {
     await verifyAdminRole(userId, db);
 
-    const _courseKeys = courseKeys !== null && courseKeys || [];
-    const _emails = emails !== null && emails || [];
     try {
 
       const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs, { db });
-      if (assignmentList === '' && !_courseKeys && !_emails) return 0;
+      if (assignmentList === '' && !courseKeys && !emails) return 0;
 
       await db.beginTransaction();
-      const { affectedRows } = await db.query(`UPDATE access_tokens SET ${assignmentList} WHERE id = ${id}`);
-      if (_courseKeys && _emails) await db.query(`CALL set_access_token_attachments(${id}, ${jsonToString(_courseKeys)}, ${jsonToString(_emails)})`);
+
+      if (assignmentList !== '') {
+        await db.query(`UPDATE access_tokens SET ${assignmentList} WHERE id = ${id}`) |> #.affectedRows;
+      }
+      if (courseKeys || emails) {
+        await db.query(`CALL set_access_token_attachments(${id}, ${jsonToString(courseKeys || null)}, ${jsonToString(emails || null)})`);
+      }
 
       await db.commit();
-      return affectedRows;
+      return 1;
 
     } catch(error) {
 

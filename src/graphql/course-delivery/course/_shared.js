@@ -29,6 +29,7 @@ function searchWord(word) {
 
 const whereConditionBuilder = {
   keys: values => `id IN (${values.join(', ')})`,
+  excludeKeys: values => values && values.length > 0 ? `id NOT IN (${values.join(', ')})` : '',
   searchName: text => text
     .trim().replace(/\s{2,}/g, ' ')
     .split(' ')
@@ -70,6 +71,7 @@ export const sqlBuilder = new SQLBuilder(
 
 export const searchArgs = {
   keys: { type: _.List(_.Int) },
+  excludeKeys: { type: _.List(_.Int) },
   searchName: { type: _.String },
   currentUserEnrolled: { type: _.Boolean },
   availableToEnroll: { type: _.Boolean },
