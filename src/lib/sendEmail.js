@@ -4,8 +4,8 @@ import { emailConfig } from '../../config';
 const { from, dkim } = emailConfig;
 
 const _sendEmail = sendmail({
-  dkim,
-  silent: true
+  //dkim,
+  //silent: true
 });
 
 export function sendEmail(email, subject, html, attachments) {
@@ -22,3 +22,5 @@ export function sendEmail(email, subject, html, attachments) {
 
   });
 }
+
+//sendEmail('johncooper87@mail.ru', 'asd', '<div>123</div>');
