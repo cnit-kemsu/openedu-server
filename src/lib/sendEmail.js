@@ -1,11 +1,11 @@
 import sendmail from 'sendmail';
-//import { emailConfig } from '../../config';
+import { emailConfig } from '../../config';
 
-//const { from, dkim } = emailConfig;
+const { from, dkim } = emailConfig;
 
 const _sendEmail = sendmail({
-  //dkim,
-  //silent: true
+  dkim,
+  silent: true
 });
 
 export function sendEmail(email, subject, html, attachments) {
@@ -13,7 +13,7 @@ export function sendEmail(email, subject, html, attachments) {
   return new Promise((resolve, reject) => {
 
     _sendEmail(
-      { from: 'info-openedu@kemsu.ru', to: email, subject, html, attachments },
+      { from, to: email, subject, html, attachments },
       function (error, reply) {
         if (error) reject(error);
         else resolve(reply);
@@ -23,10 +23,6 @@ export function sendEmail(email, subject, html, attachments) {
   });
 }
 
-const fs = require('fs');
-const sendFile = fs.readFileSync('send.jpg');
-const receiptFile = {
-  filename: 'send1.jpg',
-  content: sendFile
-};
-sendEmail('johncooper87@mail.ru', 'asd', '<div>123</div>', [receiptFile]);
+// const fs = require('fs');
+// const sendFile = fs.readFileSync('send.jpg');
+// sendEmail('sibkrot@mail.ru', 'test subject', '<div>test body</div>');
