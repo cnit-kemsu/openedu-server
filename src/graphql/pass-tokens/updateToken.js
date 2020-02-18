@@ -1,6 +1,6 @@
 import { types as _, jsonToString } from '@kemsu/graphql-server';
-import { verifyAdminRole } from '@lib/authorization';
-import { sqlBuilder } from './_shared';
+import { verifyAdminRole, updateToken } from '@lib/authorization';
+import { sqlBuilder, updateUsersTokensCache } from './_shared';
 
 export default {
   type: _.NonNull(_.Int),
@@ -25,7 +25,9 @@ export default {
         await db.query(`UPDATE access_tokens SET ${assignmentList} WHERE id = ${id}`) |> #.affectedRows;
       }
       if (courseKeys || emails) {
-        await db.query(`CALL set_access_token_attachments(${id}, ${jsonToString(courseKeys || null)}, ${jsonToString(emails || null)})`);
+        const diff = await db.query(`SELECT set_access_token_attachments(${id}, ${jsonToString(courseKeys || null)}, ${jsonToString(emails || null)})`);
+        updateToken(id, courseKeys);
+        await updateUsersTokensCache(id, diff);
       }
 
       await db.commit();

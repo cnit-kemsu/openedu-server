@@ -1,4 +1,5 @@
 import { SQLBuilder, _escape, jsonToString } from '@kemsu/graphql-server';
+import { findLocalUser } from '@lib/authorization';
 
 const selectExprListBuilder = {
   id: 'id',
@@ -23,3 +24,17 @@ export const sqlBuilder = new SQLBuilder(
   assignmentListBuilder
 );
 
+export async function updateUsersTokensCache(tokenKey, { exclude_user_keys, include_user_keys }) {
+
+  for (const userKey of exclude_user_keys) {
+    const user = findLocalUser(userKey);
+    if (user?.constructor === Promise) await user;
+    if (user) user.excludeTokenKey(tokenKey);
+  }
+
+  for (const userKey of include_user_keys) {
+    const user = findLocalUser(userKey);
+    if (user?.constructor === Promise) await user;
+    if (user) user.includeTokenKey(tokenKey);
+  }
+}

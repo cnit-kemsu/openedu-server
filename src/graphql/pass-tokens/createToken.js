@@ -1,6 +1,6 @@
 import { types as _, jsonToString } from '@kemsu/graphql-server';
-import { verifyAdminRole } from '@lib/authorization';
-import { sqlBuilder } from './_shared';
+import { verifyAdminRole, updateToken } from '@lib/authorization';
+import { sqlBuilder, updateUsersTokensCache } from './_shared';
 
 export default {
   type: _.NonNull(_.Int),
@@ -18,7 +18,11 @@ export default {
 
       const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs, { db });
       const { insertId } = await db.query(`INSERT INTO access_tokens SET ${assignmentList}`);
-      if (insertId && (courseKeys || emails)) await db.query(`CALL set_access_token_attachments(${insertId}, ${jsonToString(courseKeys || null)}, ${jsonToString(emails || null)})`);
+      if (insertId && (courseKeys || emails)) {
+        const diff = await db.query(`SELECT set_access_token_attachments(${insertId}, ${jsonToString(courseKeys || null)}, ${jsonToString(emails || null)})`);
+        updateToken(insertId, courseKeys);
+        await updateUsersTokensCache(insertId, diff);
+      }
 
       await db.commit();
       return insertId;

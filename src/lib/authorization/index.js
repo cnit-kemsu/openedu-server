@@ -3,8 +3,13 @@ import { Cache } from './Caching';
 import Course from './Course';
 import Subsection from './Subsection';
 import Unit from './Unit';
-import User from './User';
+import User, { updateToken, deleteToken } from './User';
 import Section from './Section';
+
+export {
+  updateToken,
+  deleteToken
+};
 
 Cache.createCachedValues('users', User);
 Cache.createCachedValues('courses', Course);
@@ -17,6 +22,10 @@ export async function findUser(id, db) {
   const user = await Cache.find('users', id, db);
   if (user === undefined) throw new GraphQLError(`Invalid user key`, ClientInfo.PERMISSION_DENIED);
   return user;
+}
+
+export function findLocalUser(id) {
+  return Cache.findLocal('users', id);
 }
 
 export async function findCourse(id, db) {

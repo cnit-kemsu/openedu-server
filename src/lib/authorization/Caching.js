@@ -37,9 +37,12 @@ class CahedValueArray {
     return this.values.find(v => v.key === key);
   }
 
-  async find(key, db) {
+  async find(key, db, forceFetch = true) {
 
     let value = this.findLocal(key);
+
+    if (!forceFetch) return value;
+
     let index;
 
     if (value === undefined) {

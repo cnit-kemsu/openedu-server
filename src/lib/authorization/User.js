@@ -10,6 +10,29 @@ function finalizeAttempt(a) {
   //a.maxScore = maxScore;
 }
 
+const tokens = new Map();
+
+async function updateTokens(requiredKeys, db) {
+  const existedKeys = [...tokens.keys()];
+  const loadKeys = requiredKeys.filter(key => !existedKeys.includes(key));
+  if (loadKeys.length === 0) return;
+  const _tokens = await db.query(`
+    SELECT access_token_id, CONCAT('[', GROUP_CONCAT(course_id SEPARATOR ', '), ']') AS course_keys
+    FROM access_token_course_attachments
+    WHERE access_token_id IN (${loadKeys.join(', ')})
+    GROUP BY access_token_id;
+  `);
+  for (const { access_token_id: tokenKey, course_keys } of _tokens) if (!tokens.has(tokenKey)) tokens.set(tokenKey, JSON.parse(course_keys));
+}
+
+export function updateToken(key, courseKeys) {
+  tokens.set(key, courseKeys);
+}
+
+export function deleteToken(key) {
+  tokens.set(key, []);
+}
+
 export default class User extends CachedValue {
 
   async resolve(db) {
@@ -41,6 +64,23 @@ export default class User extends CachedValue {
       `);
       user.quizAttempts?.forEach(finalizeAttempt);
 
+      // const tokens = await db.query(`
+      //   SELECT atca.access_token_id AS access_token_id, CONCAT('[', GROUP_CONCAT(atca.course_id SEPARATOR ', '), ']') AS course_keys
+      //   FROM access_token_user_attachments AS atua
+      //     JOIN access_token_course_attachments AS atca
+      //     ON atua.access_token_id = atca.access_token_id
+      //   WHERE atua.user_id = 4
+      //   GROUP BY atca.access_token_id;
+      // `);
+      // if (tokens.length > 0) {
+      //   this.tokens = new Map();
+      //   for (const token of tokens) this.tokens.set(token.access_token_id, JSON.parse(token.course_keys));
+      // }
+      this.tokenKeys = await db.query(`
+        SELECT access_token_id FROM access_token_user_attachments WHERE user_id = 4;
+      `);
+      if (this.tokenKeys.length > 0) await updateTokens(this.tokenKeys, db);
+
     } else if (user.role === 'instructor' || user.role === 'admin') {
       courses = await db.query(`SELECT course_id \`key\` FROM instructor_assignments WHERE user_id = ${this.key}`);
     }
@@ -53,11 +93,25 @@ export default class User extends CachedValue {
   }
 
   hasCourseKey(courseId) {
-    return this.courseKeys.includes(courseId);
+    if (this.courseKeys.includes(courseId)) return true;
+    for (const tokenKey of this.tokenKeys) {
+      if (tokens.has(tokenKey)
+        && tokens.get(tokenKey).includes(courseId)
+      ) return true;
+    }
+    return false;
   }
 
   pushCourseKey(courseId) {
     this.courseKeys.push(courseId);
+  }
+
+  excludeTokenKey(key) {
+    this.tokenKeys.splice(this.tokenKeys.indexOf(key), 1);
+  }
+
+  includeTokenKey(key) {
+    this.tokenKeys.push(key);
   }
 
   hasQuizAttempt(unitId) {
