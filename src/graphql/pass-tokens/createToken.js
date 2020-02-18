@@ -20,8 +20,8 @@ export default {
       const { insertId } = await db.query(`INSERT INTO access_tokens SET ${assignmentList}`);
       if (insertId && (courseKeys || emails)) {
         const diff = await db.query(`SELECT set_access_token_attachments(${insertId}, ${jsonToString(courseKeys || null)}, ${jsonToString(emails || null)})`);
-        updateToken(insertId, courseKeys);
-        await updateUsersTokensCache(insertId, diff);
+        if (courseKeys) updateToken(insertId, courseKeys);
+        if (emails) await updateUsersTokensCache(insertId, diff);
       }
 
       await db.commit();

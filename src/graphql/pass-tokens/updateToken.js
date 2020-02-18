@@ -26,8 +26,8 @@ export default {
       }
       if (courseKeys || emails) {
         const diff = await db.query(`SELECT set_access_token_attachments(${id}, ${jsonToString(courseKeys || null)}, ${jsonToString(emails || null)})`);
-        updateToken(id, courseKeys);
-        await updateUsersTokensCache(id, diff);
+        if (courseKeys) updateToken(id, courseKeys);
+        if (emails) await updateUsersTokensCache(id, diff);
       }
 
       await db.commit();
