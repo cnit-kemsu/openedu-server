@@ -94,7 +94,7 @@ export default class User extends CachedValue {
 
   hasCourseKey(courseId) {
     if (this.courseKeys.includes(courseId)) return true;
-    for (const tokenKey of this.tokenKeys) {
+    if (this.tokenKeys) for (const tokenKey of this.tokenKeys) {
       if (tokens.has(tokenKey)
         && tokens.get(tokenKey).includes(courseId)
       ) return true;

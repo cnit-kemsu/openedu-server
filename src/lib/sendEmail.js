@@ -23,6 +23,6 @@ export function sendEmail(email, subject, html, attachments) {
   });
 }
 
-// const fs = require('fs');
-// const sendFile = fs.readFileSync('send.jpg');
-// sendEmail('sibkrot@mail.ru', 'test subject', '<div>test body</div>');
+//const fs = require('fs');
+//const sendFile = fs.readFileSync('send.jpg');
+//sendEmail('guroveugen@yandex.ru', 'test subject', '<div>test body</div>');
