@@ -107,9 +107,40 @@
 
 // //socket.on('data', buff => console.log(buff.toString()));
 
-const {resolveMx} = require('dns');
+// const {resolveMx} = require('dns');
 
-resolveMx('mail.ru', function (err, data) {
-  console.log(err);
-  console.log(data);
-});
+// resolveMx('mail.ru', function (err, data) {
+//   console.log(err);
+//   console.log(data);
+// });
+const ps = [];
+
+function resolveAll() {
+  process.nextTick(() => {
+    for (const i in ps) ps[i][0](i);
+  });
+}
+
+async function main() {
+
+  const p1 = new Promise((res, rej) => { ps.push([res, rej]); });
+  resolveAll();
+  const p2 = new Promise((res, rej) => { ps.push([res, rej]); });
+
+  //console.log(await p1);
+  //console.log(await p2);
+  console.log(await Promise.all([p1, p2]));
+
+  process.exit();
+}
+
+main();
+
+// let IntType,
+// NNIntType,
+// ListType,
+// NNListType,
+// NotNull;
+
+
+// const a = NotNull(ListType(NotNull(IntType)));

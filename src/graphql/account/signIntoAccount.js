@@ -18,7 +18,7 @@ export default {
 
     user.complete = data !== null;
     user.verified = passkey === null;
-    if (pwdhash !== undefined && verifyPassword(password, pwdhash)) return {
+    if (pwdhash !== undefined && password && verifyPassword(password, pwdhash)) return {
       ...user,
       picture,
       bearer: signBearer(user, jwtSecret)

@@ -28,8 +28,8 @@ function searchWord(word) {
 }
 
 const whereConditionBuilder = {
-  keys: values => `id IN (${values.join(', ')})`,
-  excludeKeys: values => values && values.length > 0 ? `id NOT IN (${values.join(', ')})` : '',
+  keys: values => values?.length > 0 ? `id IN (${values.join(', ')})` : '',
+  excludeKeys: values => values?.length > 0 ? `id NOT IN (${values.join(', ')})` : '',
   searchName: text => text
     .trim().replace(/\s{2,}/g, ' ')
     .split(' ')
