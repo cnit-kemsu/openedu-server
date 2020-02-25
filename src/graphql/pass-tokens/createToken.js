@@ -19,9 +19,9 @@ export default {
       const assignmentList = await sqlBuilder.buildAssignmentList(inputArgs, { db });
       const { insertId } = await db.query(`INSERT INTO access_tokens SET ${assignmentList}`);
       if (insertId && (courseKeys || emails)) {
-        const diff = await db.query(`SELECT set_access_token_attachments(${insertId}, ${jsonToString(courseKeys || null)}, ${jsonToString(emails || null)})`);
+        const [{ diff }] = await db.query(`SELECT set_access_token_attachments(${insertId}, ${jsonToString(courseKeys || null)}, ${jsonToString(emails || null)}) AS diff`);
         if (courseKeys) updateToken(insertId, courseKeys);
-        if (emails) await updateUsersTokensCache(insertId, diff);
+        if (emails) await updateUsersTokensCache(insertId, JSON.parse(diff));
       }
 
       await db.commit();

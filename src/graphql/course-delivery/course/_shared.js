@@ -38,7 +38,7 @@ const whereConditionBuilder = {
   async currentUserEnrolled(value, { userId, db }) {
     if (value !== true || userId == null) return null;
     const user = await findUser(userId, db);
-    return `id IN (${user.courseKeys.join(', ')})`;
+    return `id IN (${user.allCourseKeys.join(', ')})`;
   },
   availableToEnroll: value => value == null ? null : `available_to_enroll = ${value}`,
   defunct: value => value == null ? null : `defunct = ${value}`

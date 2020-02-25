@@ -78,7 +78,7 @@ export default class User extends CachedValue {
       // }
       this.tokenKeys = await db.query(`
         SELECT access_token_id FROM access_token_user_attachments WHERE user_id = 4;
-      `);
+      `) |> #.map(({ access_token_id }) => access_token_id);
       if (this.tokenKeys.length > 0) await updateTokens(this.tokenKeys, db);
 
     } else if (user.role === 'instructor' || user.role === 'admin') {
@@ -100,6 +100,14 @@ export default class User extends CachedValue {
       ) return true;
     }
     return false;
+  }
+
+  get allCourseKeys() {
+    const courseKeys = [...this.courseKeys];
+    if (this.tokenKeys) for (const tokenKey of this.tokenKeys) {
+      if (tokens.has(tokenKey)) courseKeys.push(...tokens.get(tokenKey));
+    }
+    return courseKeys;
   }
 
   pushCourseKey(courseId) {

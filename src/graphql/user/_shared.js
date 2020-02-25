@@ -49,6 +49,7 @@ export const sqlBuilder = new SQLBuilder(
 
 export const searchArgs = {
   keys: { type: _.List(_.Int) },
+  excludeKeys: { type: _.List(_.Int) },
   searchText: { type: _.String },
   roles: { type: _.List(RoleEnumType) }
 };

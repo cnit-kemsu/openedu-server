@@ -25,9 +25,9 @@ export default {
         await db.query(`UPDATE access_tokens SET ${assignmentList} WHERE id = ${id}`) |> #.affectedRows;
       }
       if (courseKeys || emails) {
-        const diff = await db.query(`SELECT set_access_token_attachments(${id}, ${jsonToString(courseKeys || null)}, ${jsonToString(emails || null)})`);
+        const [{ diff }] = await db.query(`SELECT set_access_token_attachments(${id}, ${jsonToString(courseKeys || null)}, ${jsonToString(emails || null)}) AS diff`);
         if (courseKeys) updateToken(id, courseKeys);
-        if (emails) await updateUsersTokensCache(id, diff);
+        if (emails) await updateUsersTokensCache(id, JSON.parse(diff));
       }
 
       await db.commit();
