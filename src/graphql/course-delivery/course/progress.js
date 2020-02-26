@@ -5,6 +5,7 @@ import { findUser, findCourse } from '@lib/authorization';
 const UnitUserProgressType = _.Object({
   name: 'UnitUserProgress',
   fields: {
+    id: { type: _.Int },
     unitName: { type: _.NonNull(_.String) },
     score: { type: _.Int },
     maxScore: { type: _.Int }
@@ -71,6 +72,7 @@ export default {
       const userFinalAttempts = courseAttempts.filter(({ userId: _userId }) => _user.id === _userId).map(val => ({ ...val, ...courseFinalAttempts.find(({ id }) => id === val.unitId) }));
       const certificateAvailable = courseFinalAttempts.length === userFinalAttempts.length; 
       const userData = JSON.parse(_user.data);
+      userData.id = _user.id;
       userData.picture = _user.picture != null ? JSON.parse(_user.picture) : null;
       userData.email = _user.email;
 
@@ -84,7 +86,7 @@ export default {
       userData.allScores = allScores;
       userData.maxAllScores = maxAllScores;
 
-      const _userFinalAttempts = courseFinalAttempts.map(({ id, ...other }) => ({ id, ...other, ...userFinalAttempts.find(a => a.unitId === id) }));
+      const _userFinalAttempts = courseFinalAttempts.map(({ id, ...other }) => ({ attemptId: id, ...other, ...userFinalAttempts.find(a => a.unitId === id) }));
       userFinalAttemptsArray.push({ units: _userFinalAttempts, certificateAvailable, userData });
     }
 

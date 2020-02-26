@@ -35,6 +35,10 @@ export default _.Object({
       type: _.JSON,
       resolve: ({ picture }) => resolveJSON(picture)
     },
+    logo: {
+      type: _.JSON,
+      resolve: ({ logo }) => resolveJSON(logo)
+    },
     isEnrolledToCourse: { type: _.Boolean },
 
     sections: {

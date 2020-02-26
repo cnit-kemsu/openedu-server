@@ -11,6 +11,7 @@ export default {
     summary: { type: _.String },
     description: { type: _.JSON },
     picture: { type: _.JSON },
+    logo: { type: _.JSON },
     startDate: { type: _.String },
     enrollmentEndDate: { type: _.String },
     price: { type: _.Float },

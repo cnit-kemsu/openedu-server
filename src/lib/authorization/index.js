@@ -54,9 +54,17 @@ export async function verifySuperuserRole(id, db) {
 
 export async function verifyAdminRole(id, db) {
   const user = await findUser(id, db);
-  if (user.role === 'superuser') return;
+  if (user.role === 'superuser') return user;
   if (user.role !== 'admin') throw new GraphQLError(`You do not have permission to perform the action`, ClientInfo.PERMISSION_DENIED);
   return user;
+}
+
+export async function verifyInstructorRole(id, db) {
+  const user = await findUser(id, db);
+  if (user.role === 'superuser') return user;
+  if (user.role === 'admin') throw user;
+  if (user.role === 'instructor') return user;
+  throw new GraphQLError(`You do not have permission to perform the action`, ClientInfo.PERMISSION_DENIED);
 }
 
 export async function findSection(id, db) {

@@ -10,6 +10,7 @@ const selectExprListBuilder = {
   summary: 'get_value(summary_value_id)',
   description: 'get_value(description_value_id)',
   picture: 'get_value(picture_value_id)',
+  logo: 'get_value(logo_value_id)',
 
   sections: ['id']
 };
@@ -42,6 +43,10 @@ const assignmentListBuilder = {
   async picture(value, { db }) {
     const fileIdArray = await insertFilesOfValue(db, value);
     return `picture_value_id = set_value(picture_value_id, ${jsonToString(value)}, ${fileIdArray})`;
+  },
+  async logo(value, { db }) {
+    const fileIdArray = await insertFilesOfValue(db, value);
+    return `logo_value_id = set_value(logo_value_id, ${jsonToString(value)}, ${fileIdArray})`;
   }
 };
 

@@ -131,6 +131,10 @@ export default class User extends CachedValue {
     return this.quizAttempts.find(a => a.unitId === unitId);
   }
 
+  deleteQuizAttempt(unitId) {
+    this.quizAttempts.splice(this.quizAttempts.findIndex(a => a.unitId === unitId), 1);
+  }
+
   pushQuizAttempt(unitId, dataValueId, startDate) {
     this.quizAttempts.push({ unitId, dataValueId, startDate, repliesCount: 0 });
   }

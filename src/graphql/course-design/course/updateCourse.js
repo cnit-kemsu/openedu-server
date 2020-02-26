@@ -10,6 +10,7 @@ export default {
     summary: { type: _.String },
     description: { type: _.JSON },
     picture: { type: _.JSON },
+    logo: { type: _.JSON },
     data: { type: _.JSON }
   },
   async resolve(obj, { id, ...inputArgs }, { userId, db }) {
