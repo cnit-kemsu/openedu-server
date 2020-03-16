@@ -14,7 +14,8 @@ const selectExprListBuilder = {
   subsection: ['subsectionId'],
   previousUnitId: ['id'],
   nextUnitId: ['id'],
-  currentUserLastAttempt: ['id']
+  currentUserLastAttempt: ['id'],
+  currentTime: ['id']
 };
 
 const whereConditionBuilder = {

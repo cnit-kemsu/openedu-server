@@ -1,4 +1,4 @@
-import { types as _, resolveJSON, upgradeResolveFn } from '@kemsu/graphql-server';
+import { types as _, resolveJSON, upgradeResolveFn, dateToString } from '@kemsu/graphql-server';
 import { findUser, findUnit } from '@lib/authorization';
 import UnitTypeEnumType from '../../_shared/UnitTypeEnum';
 import SubsectionType from '../subsection/SubsectionType';
@@ -51,6 +51,13 @@ export default _.Object({
 
         return await user.getQuizAttempt(id);
       } 
+    },
+
+    currentTime: {
+      type: _.String,
+      resolve() {
+        return dateToString(new Date());
+      }
     },
 
     subsection: {
