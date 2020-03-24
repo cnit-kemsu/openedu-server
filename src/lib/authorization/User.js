@@ -114,6 +114,10 @@ export default class User extends CachedValue {
     this.courseKeys.push(courseId);
   }
 
+  removeCourseKey(courseId) {
+    this.courseKeys.splice(this.courseKeys.indexOf(courseId), 1);
+  }
+
   excludeTokenKey(key) {
     this.tokenKeys.splice(this.tokenKeys.indexOf(key), 1);
   }
