@@ -153,7 +153,8 @@ const crypto = require('crypto');
 
 const secret = '1xpbsMwR0JD8ODkpIhYAiqAgxqgotoaj2FGxqWkPelo';
 //const str = `createname=Test+Meeting&meetingID=abc123&attendeePW=111222&moderatorPW=333444`;
-const str = `joinfullName=ASDASD&meetingID=abc123&password=111222&redirect=false`;
+const str = `joinfullName=ASDASD&meetingID=abc123&password=333444&redirect=false`;
+//const str = `joinfullName=ASDASD&meetingID=abc123&password=111222&redirect=true`;
 const _str = str + secret;
 
 const shasum = crypto.createHash('sha1');
