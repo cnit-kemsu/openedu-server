@@ -3,7 +3,7 @@ SET collation_connection = utf8mb4_unicode_ci;
 
 DELIMITER //
 
-CREATE OR REPLACE FUNCTION set_instructor_assignemtns(p_course_id INT UNSIGNED, p_user_id_array JSON) RETURNS JSON
+CREATE OR REPLACE FUNCTION set_instructor_assignments(p_course_id INT UNSIGNED, p_user_id_array JSON) RETURNS JSON
 BEGIN
 	DECLARE v_diff JSON DEFAULT '{ "exclude_user_keys": [], "include_user_keys": [] }';
 	DECLARE v_user_id INT UNSIGNED;

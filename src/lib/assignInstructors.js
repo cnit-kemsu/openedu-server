@@ -4,7 +4,7 @@ import { findLocalUser } from '@lib/authorization';
 export async function assignInstructors(db, courseId, instructorKeys) {
   if (instructorKeys === undefined) return 0;
 
-  const [{ diff }] = await db.query(`SELECT set_instructor_assignemtns(${courseId}, ${jsonToString(instructorKeys)}) AS diff`);
+  const [{ diff }] = await db.query(`SELECT set_instructor_assignments(${courseId}, ${jsonToString(instructorKeys)}) AS diff`);
   await updateUsersCache(courseId, JSON.parse(diff));
 
   return 1;

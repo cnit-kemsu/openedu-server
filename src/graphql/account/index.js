@@ -3,6 +3,8 @@ import signUpAccount from './signUpAccount';
 import verifyAccount from './verifyAccount';
 import confirmAccount from './confirmAccount';
 import completeAccount from './completeAccount';
+import resetPasswordToken from './ResetPasswordToken';
+import resetPassword from './ResetPassword';
 
 export default {
   mutation: {
@@ -10,6 +12,8 @@ export default {
     signUpAccount,
     verifyAccount,
     confirmAccount,
-    completeAccount
+    completeAccount,
+    resetPasswordToken,
+    resetPassword
   }
 };
