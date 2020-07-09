@@ -17,22 +17,3 @@ export const { schema, loaders } = compose(
   payment,
   passTokens
 );
-
-// export const { schema, loaders } = compose([
-//   courseDesign
-//   // account,
-//   // users,
-//   // students,
-//   // courseDesignTemplates,
-//   // courseDesignSections,
-//   // courseDesignSubsections,
-//   // courseDesignUnits,
-//   // courseDeliveryInstances,
-//   // courseDeliverySections,
-//   // courseDeliverySubsections,
-//   // courseDeliveryUnits,
-//   // quiz
-// ], [
-//   //CourseType,
-//   //SectionType
-// ]);

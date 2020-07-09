@@ -19,8 +19,8 @@ if (process.env.NODE_ENV === 'production') handleUncaughtErrors();
 
 const app = express();
 
-bodyParser.json() |> app.use; // to support JSON-encoded bodies
-//bodyParser.urlencoded({ extended: true }) |>app.use; // to support URL-encoded bodies
+bodyParser.json() |> app.use;
+//bodyParser.urlencoded({ extended: true }) |>app.use;
 
 path.resolve('./public') |> express.static |> app.use;
 

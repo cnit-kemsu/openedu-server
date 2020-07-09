@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { DuplicatesPlugin } from 'inspectpack/plugin';
@@ -26,7 +25,6 @@ export default {
           'example',
         ].map(_ => path.resolve(__dirname, _)),
         loader: 'babel-loader',
-        //options: fs.readFileSync('.babelrc') |> JSON.parse
       },
       {
         test: /\.css$/,
@@ -40,7 +38,6 @@ export default {
 
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'openedu-server',
       template: './example/index.html'
     }),
     new DuplicatesPlugin({})
@@ -60,11 +57,11 @@ export default {
     }
   },
 
-  // resolve: {
-  //   alias: {
-  //     '@lib': path.resolve(__dirname, 'src/lib')
-  //   }
-  // },
+  resolve: {
+    alias: {
+      '@lib': path.resolve(__dirname, 'src/lib')
+    }
+  },
 
   devServer: {
     proxy: {

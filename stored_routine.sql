@@ -5,47 +5,9 @@ DELIMITER //
 
 -- bug#1: trigger does not fire when an action is called from another trigger
 
-CREATE OR REPLACE PROCEDURE _throw_error(p_message_text TINYTEXT)
-BEGIN
-	SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = p_message_text;
-END;
-
---
--- user routine
---
-
-CREATE OR REPLACE FUNCTION get_user_role(p_user_id INT UNSIGNED) RETURNS TINYTEXT
-BEGIN
-	RETURN (SELECT role FROM users WHERE id = p_user_id);
-END;
-
--- CREATE OR REPLACE FUNCTION get_session_user_role() RETURNS TINYTEXT
--- BEGIN
--- RETURN @role;
--- END;
-
-CREATE OR REPLACE PROCEDURE _verify_session_user_role_assigned(p_user_id INT UNSIGNED)
-BEGIN
-	IF @role IS NULL THEN
-		SET @role = get_user_role(p_user_id);
-		IF @role IS NULL THEN SET @role = 'null'; END IF;
-	END IF;
-END;
-
-CREATE OR REPLACE TRIGGER after_user_delete AFTER DELETE ON users FOR EACH ROW
-BEGIN
-	CALL _decrease_value_total_attachments(OLD.picture_value_id);
-END;
-
 --
 -- file routine
 --
-
-CREATE OR REPLACE FUNCTION create_file(p_mimetype TINYTEXT, p_buffer MEDIUMBLOB) RETURNS INT UNSIGNED
-BEGIN
-	INSERT INTO files SET mimetype = p_mimetype, _buffer = p_buffer;
-	RETURN LAST_INSERT_ID();
-END;
 
 -- private
 -- p_is_new_value indicates whether the value reference with the specified identifier is newly created (optimization)
@@ -202,6 +164,7 @@ CREATE OR REPLACE FUNCTION create_course_delivery_instance(p_template_id INT UNS
 BEGIN
 	DECLARE v_course_insert_id INT UNSIGNED;
 	DECLARE v_section_insert_id INT UNSIGNED;
+	DECLARE v_subsection_insert_id INT UNSIGNED;
 	
 	IF (SELECT COUNT(1) FROM course_design_units WHERE subsection_id IN (
 		SELECT id FROM course_design_subsections WHERE section_id IN (SELECT id FROM course_design_sections WHERE course_id = p_template_id)
@@ -209,18 +172,20 @@ BEGIN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot create course delivery instance, because one or more of its units has data_value_id is set to NULL';
 	END IF;
 	
-	INSERT INTO course_delivery_instances (_name, summary_value_id, description_value_id, picture_value_id, creator_id, _data, template_id, creation_date, start_date, enrollment_end_date, price) SELECT
+	INSERT INTO course_delivery_instances (_name, summary_value_id, description_value_id, picture_value_id, logo_value_id, creator_id, _data, template_id, creation_date, start_date, enrollment_end_date, price, defunct) SELECT
 		_name,
 		_increase_value_total_attachments(summary_value_id),
 		_increase_value_total_attachments(description_value_id),
 		_increase_value_total_attachments(picture_value_id),
+		_increase_value_total_attachments(logo_value_id),
 		p_creator_id,
 		_data,		
 		p_template_id,
 		NOW(),
 		p_start_date,
 		p_enrollment_end_date,
-		p_price
+		p_price,
+		FALSE
 		
 	FROM course_design_templates WHERE id = p_template_id;
 	SET v_course_insert_id = LAST_INSERT_ID();
@@ -245,15 +210,18 @@ BEGIN
 				IF(_current_subsection.expiration_period IS NULL, NULL, DATE_ADD(p_start_date, INTERVAL _current_subsection.expiration_period DAY)),
 				_current_subsection.sequence_number
 			);
+			SET v_subsection_insert_id = LAST_INSERT_ID();
 			
-			INSERT INTO course_delivery_units (subsection_id, _name, summary_value_id, _type, data_value_id, sequence_number) SELECT 
-				LAST_INSERT_ID(),
-				_name,
-				_increase_value_total_attachments(summary_value_id),
-				_type,
-				_increase_value_total_attachments(data_value_id),
-				sequence_number
-			FROM course_design_units WHERE subsection_id = v_id;
+			FOR _current_unit IN (SELECT subsection_id, _name, summary_value_id, _type, data_value_id, sequence_number FROM course_design_units WHERE subsection_id = _current_subsection.id) DO
+				INSERT INTO course_delivery_units (subsection_id, _name, summary_value_id, _type, data_value_id, sequence_number) VALUES ( 
+					v_subsection_insert_id,
+					_current_unit._name,
+					_increase_value_total_attachments(_current_unit.summary_value_id),
+					_current_unit._type,
+					_increase_value_total_attachments(_current_unit.data_value_id),
+					_current_unit.sequence_number
+				);
+			END FOR;
 			
 		END FOR;
 		
@@ -378,35 +346,100 @@ BEGIN
 	END CASE;
 END;
 
+-- CREATE OR REPLACE FUNCTION get_previous_subsection_delivery_id(p_subsection_id INT UNSIGNED) RETURNS INT UNSIGNED
+-- BEGIN
+-- 	DECLARE v_section_id INT UNSIGNED DEFAULT (SELECT section_id FROM course_delivery_subsections WHERE id = p_subsection_id);
+-- 	DECLARE v_course_id INT UNSIGNED DEFAULT (SELECT course_id FROM course_delivery_sections WHERE id = v_section_id);
+-- 	DECLARE v_is_first_in_section INT UNSIGNED DEFAULT (SELECT id = p_subsection_id FROM course_delivery_subsections WHERE section_id = v_section_id LIMIT 1);
+-- 	DECLARE v_previous_section_id INT UNSIGNED DEFAULT (SELECT id FROM course_delivery_sections WHERE course_id = v_course_id AND id < v_section_id ORDER BY id DESC LIMIT 1);
+	
+-- 	IF v_is_first_in_section THEN
+-- 		RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_previous_section_id ORDER BY id DESC LIMIT 1);
+-- 	END IF;
+	
+-- 	RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_section_id AND id < p_subsection_id ORDER BY id DESC LIMIT 1);
+-- END;
+
+-- CREATE OR REPLACE FUNCTION get_next_subsection_delivery_id(p_subsection_id INT UNSIGNED) RETURNS INT UNSIGNED
+-- BEGIN
+-- 	DECLARE v_section_id INT UNSIGNED DEFAULT (SELECT section_id FROM course_delivery_subsections WHERE id = p_subsection_id);
+-- 	DECLARE v_course_id INT UNSIGNED DEFAULT (SELECT course_id FROM course_delivery_sections WHERE id = v_section_id);
+-- 	DECLARE v_is_last_in_section INT UNSIGNED DEFAULT (SELECT id = p_subsection_id FROM course_delivery_subsections WHERE section_id = v_section_id ORDER BY id DESC LIMIT 1);
+-- 	DECLARE v_next_section_id INT UNSIGNED DEFAULT (SELECT id FROM course_delivery_sections WHERE course_id = v_course_id AND id > v_section_id LIMIT 1);
+	
+-- 	IF v_is_last_in_section THEN
+-- 		RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_next_section_id LIMIT 1);
+-- 	END IF;
 
 --
 -- access routine
 --
 
-CREATE OR REPLACE FUNCTION get_user_courses(p_user_id INT UNSIGNED) RETURNS TEXT
-BEGIN
-	RETURN (
-		SELECT GROUP_CONCAT(course_id SEPARATOR ',') FROM (
-			(SELECT course_id FROM free_course_enrollments WHERE user_id = p_user_id )
-			UNION ALL
-			(SELECT course_id FROM paid_course_purchases WHERE user_id = p_user_id AND callback_status = 'success')
-			UNION ALL
-			(SELECT course_id FROM instructor_assignments WHERE user_id = p_user_id AND accepted = TRUE)
-		) AS courses_user_enrolled
-	);
-END;
+-- CREATE OR REPLACE FUNCTION check_user_access_to_entry(p_user_id INT UNSIGNED, p_entity_type ENUM(
+-- 	'course_design_unit',
+-- 	'course_delivery_subsection',
+-- 	'course_delivery_unit'
+-- ), p_instance_id INT UNSIGNED) RETURNS TINYTEXT
+-- BEGIN
+-- 	DECLARE v_has_access TINYINT(1) DEFAULT 0;
+-- 	DECLARE v_access_date DATETIME;
+	
+-- 	CALL verify_session_user_role_assigned(p_user_id);
+-- 	IF @role = 'null' THEN RETURN 'undefined user'; END IF;
+	
+-- 	IF @role = 'superuser' THEN RETURN 'ok'; END IF;
+-- 	IF @role = 'admin' THEN RETURN 'ok'; END IF;
+	
+-- 	IF @role = 'instructor' THEN
+		
+-- 		IF p_entity_type = 'course_delivery_subsection' THEN
+-- 			SELECT 1 INTO v_has_access FROM instructor_assignments AS e
+-- 			JOIN course_delivery_sections AS s ON s.course_id = e.course_id
+-- 			JOIN course_delivery_subsections AS ss ON ss.section_id = s.id
+-- 			WHERE user_id = p_user_id AND ss.id = p_instance_id;
+-- 			IF NOT v_has_access THEN RETURN 'not assigned'; END IF;
+-- 		END IF;
+		
+-- 		IF p_entity_type = 'course_delivery_unit' THEN
+-- 			SELECT 1 INTO v_has_access FROM instructor_assignments AS e
+-- 			JOIN course_delivery_sections AS s ON s.course_id = e.course_id
+-- 			JOIN course_delivery_subsections AS ss ON ss.section_id = s.id
+-- 			JOIN course_delivery_units AS u ON u.subsection_id = ss.id
+-- 			WHERE user_id = p_user_id AND u.id = p_instance_id;
+-- 			IF NOT v_has_access THEN RETURN 'not assigned'; END IF;
+-- 		END IF;
+		
+-- 	END IF;
+	
+-- 	IF @role = 'student' THEN
+		
+-- 		IF p_entity_type = 'course_delivery_subsection' THEN
+-- 			SELECT 1, access_date INTO v_has_access, v_access_date FROM (SELECT user_id, course_id FROM free_course_enrollments UNION ALL SELECT user_id, course_id FROM paid_course_purchases WHERE callback_status = 'success') AS e
+-- 			JOIN course_delivery_sections AS s ON s.course_id = e.course_id
+-- 			JOIN course_delivery_subsections AS ss ON ss.section_id = s.id
+-- 			WHERE user_id = p_user_id AND ss.id = p_instance_id;
+-- 			IF NOT v_has_access THEN RETURN 'not enrolled'; END IF;
+-- 			IF v_access_date > NOW() THEN RETURN 'access closed'; END IF;
+-- 		END IF;
+		
+-- 		IF p_entity_type = 'course_delivery_unit' THEN
+-- 			SELECT 1, access_date INTO v_has_access, v_access_date FROM (SELECT user_id, course_id FROM free_course_enrollments UNION ALL SELECT user_id, course_id FROM paid_course_purchases WHERE callback_status = 'success') AS e
+-- 			JOIN course_delivery_sections AS s ON s.course_id = e.course_id
+-- 			JOIN course_delivery_subsections AS ss ON ss.section_id = s.id
+-- 			JOIN course_delivery_units AS u ON u.subsection_id = ss.id
+-- 			WHERE user_id = p_user_id AND u.id = p_instance_id;
+-- 			IF NOT v_has_access THEN RETURN 'not enrolled'; END IF;
+-- 			IF v_access_date > NOW() THEN RETURN 'access closed'; END IF;
+-- 		END IF;
+		
+-- 	END IF;
+	
+-- 	RETURN 'undefined entry';
+-- END;
 
-CREATE OR REPLACE FUNCTION is_enrolled_to_course(p_user_id INT UNSIGNED, p_course_id INT UNSIGNED) RETURNS BOOLEAN
-BEGIN
-	RETURN (
-		SELECT 1 FROM free_course_enrollments WHERE user_id = p_user_id AND course_id = p_course_id
-		UNION ALL
-		SELECT 1 FROM paid_course_purchases WHERE user_id = p_user_id AND course_id = p_course_id AND callback_status = 'success'
-		UNION ALL
-		SELECT 1 FROM instructor_assignments WHERE user_id = p_user_id AND course_id = p_course_id AND accepted = TRUE
-		LIMIT 1
-	);
-END;
+--
+-- enroll routine
+--
 
 CREATE OR REPLACE PROCEDURE enroll_user_into_free_course(p_user_id INT UNSIGNED, p_course_id INT UNSIGNED)
 BEGIN
@@ -428,103 +461,39 @@ BEGIN
 	INSERT INTO free_course_enrollments (user_id, course_id, enrollment_date) VALUES (p_user_id, p_course_id, v_now_date);
 END;
 
-CREATE OR REPLACE FUNCTION get_entry_course_id(p_entity_type ENUM(
-	'course_delivery_subsection',
-	'course_delivery_unit'
-), p_instance_id INT UNSIGNED) RETURNS INT UNSIGNED
-BEGIN
-
-	IF p_entity_type = 'course_delivery_subsection' THEN
-		RETURN (
-			SELECT course_id FROM course_delivery_sections WHERE id = (
-				SELECT section_id FROM course_delivery_subsections WHERE id = p_instance_id
-			)
-		);
-	END IF;
-	
-	IF p_entity_type = 'course_delivery_subsection' THEN
-		RETURN (
-			SELECT course_id FROM course_delivery_sections WHERE id = (
-				SELECT section_id FROM course_delivery_subsections WHERE id = (
-					SELECT subsection_id FROM course_delivery_units WHERE id = p_instance_id
-				)
-			)
-		);
-	END IF;
-END;
-
-CREATE OR REPLACE FUNCTION check_user_access_to_entry(p_user_id INT UNSIGNED, p_entity_type ENUM(
-	'course_delivery_subsection',
-	'course_delivery_unit'
-), p_instance_id INT UNSIGNED) RETURNS TINYTEXT
-BEGIN
-	DECLARE v_has_access BOOLEAN DEFAULT 0;
-	DECLARE v_course_id INT UNSIGNED;
-	DECLARE v_access_date DATETIME;
-	
-	CALL verify_session_user_role_assigned(p_user_id);
-	IF @role = 'null' THEN RETURN 'undefined user'; END IF;
-	
-	IF @role = 'superuser' THEN RETURN 'ok'; END IF;
-	IF @role = 'admin' THEN RETURN 'ok'; END IF;
-	
-	SET v_course_id = get_entry_course_id(p_entity_type, p_instance_id);
-	
-	IF @role = 'instructor' THEN
-	
-		SET v_has_access = (SELECT 1 FROM instructor_assignments WHERE user_id = p_user_id AND course_id = v_course_id);
-		IF NOT v_has_access THEN RETURN 'not assigned'; END IF;
-		
-	END IF;
-	
-	IF @role = 'student' THEN
-	
-		SET v_has_access = is_enrolled_to_course(p_user_id, v_course_id);
-		IF NOT v_has_access THEN RETURN 'not enrolled'; END IF;
-		
-		IF p_entity_type = 'course_delivery_subsection' THEN
-			SET v_access_date = (SELECT access_date FROM course_delivery_subsections WHERE id = p_instance_id);
-		END IF;
-		
-		IF p_entity_type = 'course_delivery_unit' THEN
-			SET v_access_date = (SELECT access_date FROM course_delivery_subsections WHERE id = (SELECT subsection_id FROM course_delivery_units WHERE id = p_instance_id));
-		END IF;
-		
-		IF v_access_date > NOW() THEN RETURN 'access closed'; END IF;
-		RETURN 'ok';
-		
-	END IF;
-	
-	RETURN 'undefined entry';
-END;
-
 --
 -- quiz routine
 --
 
--- CREATE OR REPLACE PROCEDURE _check_user_ability_to_perform_quiz(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED)
+-- CREATE OR REPLACE PROCEDURE check_user_ability_to_perform_quiz(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED)
 -- BEGIN
--- DECLARE v_has_access TINYINT(1) DEFAULT 0;
--- DECLARE v_access_date DATETIME;
--- DECLARE v_expiration_date DATETIME;
--- DECLARE v_course_id INT UNSIGNED;
--- DECLARE v_subsection_id INT UNSIGNED;
--- 
--- CALL verify_session_user_role_assigned(p_user_id);
--- IF @role = 'null' THEN CALL _throw_error('undefined user'); END IF;
--- IF @role != 'student' THEN CALL _throw_error('invalid role'); END IF;
--- 
--- SELECT c.id, access_date, expiration_date INTO v_course_id, v_access_date, v_expiration_date FROM course_delivery_instances AS c
--- JOIN course_delivery_sections AS s ON s.course_id = c.id
--- JOIN course_delivery_subsections AS ss ON ss.section_id = s.id
--- JOIN course_delivery_units AS u ON u.subsection_id = ss.id
--- WHERE u.id = p_unit_id;
--- 
--- IF v_access_date > NOW() THEN CALL _throw_error('access closed'); END IF;
--- IF v_expiration_date < NOW() THEN CALL _throw_error('access expired'); END IF;
--- 
--- SET v_has_access = is_enrolled_to_course(p_user_id, v_course_id);
--- IF NOT v_has_access THEN CALL _throw_error('not enrolled'); END IF;
+--   DECLARE v_has_access TINYINT(1) DEFAULT 0;
+-- 	DECLARE v_access_date DATETIME;
+-- 	DECLARE v_expiration_date DATETIME;
+-- 	DECLARE v_course_id INT UNSIGNED;
+-- 	DECLARE v_is_paid_course TINYINT(1);
+  
+--   CALL verify_session_user_role_assigned(p_user_id);
+--   IF @role = 'null' THEN CALL throw_error('undefined user'); END IF;
+-- 	IF @role != 'student' THEN CALL throw_error('invalid role'); END IF;
+	
+-- 	SELECT c.id, price IS NOT NULL, access_date, expiration_date INTO v_course_id, v_is_paid_course, v_access_date, v_expiration_date FROM course_delivery_instances AS c
+-- 	JOIN course_delivery_sections AS s ON s.course_id = c.id
+-- 	JOIN course_delivery_subsections AS ss ON ss.section_id = s.id
+-- 	JOIN course_delivery_units AS u ON u.subsection_id = ss.id
+-- 	WHERE u.id = p_unit_id;
+	
+-- 	IF v_access_date > NOW() THEN CALL throw_error('access closed'); END IF;
+-- 	IF v_expiration_date < NOW() THEN CALL throw_error('access expired'); END IF;
+	
+-- 	IF v_is_paid_course THEN
+-- 		SELECT 1 INTO v_has_access FROM paid_course_purchases WHERE course_id = v_course_id AND user_id = p_user_id AND callback_status = 'success' LIMIT 1;
+-- 	ELSE
+-- 		SELECT 1 INTO v_has_access FROM free_course_enrollments WHERE course_id = v_course_id AND user_id = p_user_id LIMIT 1;
+-- 	END IF;
+	
+-- 	IF NOT v_has_access THEN CALL throw_error('not enrolled'); END IF;
+	
 -- END;
 
 CREATE OR REPLACE FUNCTION create_quiz_attempt(p_user_id INT UNSIGNED, p_unit_id INT UNSIGNED, p_date DATETIME) RETURNS INT UNSIGNED
@@ -544,6 +513,103 @@ CREATE OR REPLACE TRIGGER after_quiz_attempt_delete AFTER DELETE ON quiz_attempt
 BEGIN
 	CALL _decrease_value_total_attachments(OLD.data_value_id);
 END;
+
+-- instructor assignment routine
+
+CREATE OR REPLACE FUNCTION set_instructor_assignments(p_course_id INT UNSIGNED, p_user_id_array JSON) RETURNS JSON
+BEGIN
+	DECLARE v_diff JSON DEFAULT '{ "exclude_user_keys": [], "include_user_keys": [] }';
+	DECLARE v_user_id INT UNSIGNED;
+	
+	FOR _assignment IN (SELECT user_id FROM instructor_assignments WHERE course_id = p_course_id) DO
+		IF NOT JSON_CONTAINS(p_user_id_array, _assignment.user_id) THEN
+			DELETE FROM instructor_assignments WHERE course_id = p_course_id AND user_id = _assignment.user_id;
+			SET v_diff = JSON_ARRAY_APPEND(v_diff, '$.exclude_user_keys', _assignment.user_id);
+		END IF;
+	END FOR;
+	
+	FOR _index IN 0 .. JSON_LENGTH(p_user_id_array) - 1 DO
+		SET v_user_id = JSON_VALUE(p_user_id_array, CONCAT('$[', _index, ']'));
+		IF NOT EXISTS(SELECT 1 FROM instructor_assignments WHERE course_id = p_course_id AND user_id = v_user_id) THEN
+			INSERT INTO instructor_assignments SET course_id = p_course_id, user_id = v_user_id;
+			SET v_diff = JSON_ARRAY_APPEND(v_diff, '$.include_user_keys', v_user_id);
+		END IF;
+	END FOR;
+	
+	RETURN v_diff;		
+END;
+
+-- access token routine
+
+CREATE OR REPLACE FUNCTION set_access_token_attachments(p_id INT UNSIGNED, p_course_id_array JSON, p_email_array JSON) RETURNS JSON
+BEGIN
+	DECLARE v_course_id TEXT;
+	DECLARE v_email TEXT;
+	DECLARE v_diff JSON DEFAULT '{ "exclude_user_keys": [], "include_user_keys": [] }';
+	DECLARE v_user_id INT UNSIGNED;
+	
+	IF p_course_id_array IS NOT NULL THEN
+	
+		FOR _token IN (SELECT course_id FROM access_token_course_attachments WHERE access_token_id = p_id) DO
+			IF NOT JSON_CONTAINS(p_course_id_array, _token.course_id) THEN
+				DELETE FROM access_token_course_attachments WHERE access_token_id = p_id AND course_id = _token.course_id;
+			END IF;
+		END FOR;
+		
+		FOR _index IN 0 .. JSON_LENGTH(p_course_id_array) - 1 DO
+			SET v_course_id = JSON_VALUE(p_course_id_array, CONCAT('$[', _index, ']'));
+			IF NOT EXISTS(SELECT 1 FROM access_token_course_attachments WHERE access_token_id = p_id AND course_id = v_course_id) THEN
+				INSERT INTO access_token_course_attachments SET access_token_id = p_id, course_id = v_course_id;
+			END IF;
+		END FOR;
+	
+	END IF;
+	
+	IF p_email_array IS NOT NULL THEN
+	
+		FOR _token IN (SELECT email FROM access_token_user_attachments WHERE access_token_id = p_id) DO
+			IF NOT JSON_CONTAINS(p_email_array, CONCAT('"', _token.email, '"')) THEN
+				DELETE FROM access_token_user_attachments WHERE access_token_id = p_id AND email = _token.email;
+				SET v_user_id = (SELECT id FROM users WHERE email = _token.email);
+				IF v_user_id IS NOT NULL THEN
+					SET v_diff = JSON_ARRAY_APPEND(v_diff, '$.exclude_user_keys', v_user_id);
+				END IF;
+			END IF;
+		END FOR;
+		
+		FOR _index IN 0 .. JSON_LENGTH(p_email_array) - 1 DO
+			SET v_email = JSON_VALUE(p_email_array, CONCAT('$[', _index, ']'));
+			IF NOT EXISTS(SELECT 1 FROM access_token_user_attachments WHERE access_token_id = p_id AND email = v_email) THEN
+				SET v_user_id = (SELECT id FROM users WHERE email = v_email);
+				INSERT INTO access_token_user_attachments SET access_token_id = p_id, email = v_email, user_id = v_user_id;
+				IF v_user_id IS NOT NULL THEN
+					SET v_diff = JSON_ARRAY_APPEND(v_diff, '$.include_user_keys', v_user_id);
+				END IF;
+			END IF;
+		END FOR;
+	
+	END IF;
+	
+	RETURN v_diff;		
+END;
+
+
+-- user routine
+
+CREATE OR REPLACE TRIGGER user_after_create AFTER INSERT ON users FOR EACH ROW
+BEGIN
+	UPDATE access_token_user_attachments SET user_id = NEW.id WHERE email = NEW.email;
+END;
+
+CREATE OR REPLACE TRIGGER after_user_delete AFTER DELETE ON users FOR EACH ROW
+BEGIN
+	CALL _decrease_value_total_attachments(OLD.picture_value_id);
+END;
+
+-- unused routine
+
+-- 	RETURN (SELECT id FROM course_delivery_subsections WHERE section_id = v_section_id AND id > p_subsection_id LIMIT 1);	
+-- END;
 
 -- CREATE OR REPLACE FUNCTION get_course_design_template_creator_id(p_course_id INT UNSIGNED) RETURNS INT UNSIGNED
 -- BEGIN

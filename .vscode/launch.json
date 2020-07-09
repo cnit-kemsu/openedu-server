@@ -14,19 +14,20 @@
     },
     {
       "type": "node",
-      "request": "attach",
-      "name": "Attach to Process",
-      "port": 9229,
-      "restart": true
-    },
-    {
-      "type": "node",
       "request": "launch",
       "name": "Debug current file",
       "program": "${file}",
       "runtimeArgs": [
-        "-r", "@babel/register"
+        "-r",
+        "@babel/register"
       ]
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Process",
+      "port": 9229,
+      "restart": true
     }
   ]
 }

@@ -1,19 +1,6 @@
-//import path from 'path';
-//import fs from 'fs';
 import mariadb from 'mariadb';
 import { hashPassword } from '@kemsu/graphql-server';
-const config = require('../config');
-
-//import { dbConfig, superUser } from './config';
-
-// const dbSchema = path.resolve(__dirname, './schema.sql')
-//   |> fs.readFileSync(#).toString();
-  
-// const pool = mariadb.createPool({
-//   ...dbConfig,
-//   database: undefined,
-//   multipleStatements: true
-// });
+const config = require('./config');
 
 const pool = mariadb.createPool({
   ...config.dbConfig,
@@ -27,13 +14,6 @@ async function initdb() {
   try {
 
     db = await pool.getConnection();
-    // await db.query(dbSchema + `
-    //   INSERT INTO users (role, email, pwdhash, _data) values (?, ?, ?, "")
-    // `, [
-    //   'superuser',
-    //   superUser.email || '',
-    //   hashPassword(superUser.password)
-    // ]);
     await db.query(`
       INSERT INTO users (role, email, pwdhash, _data) values (?, ?, ?, NULL)
     `, [

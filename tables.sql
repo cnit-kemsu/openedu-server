@@ -40,6 +40,7 @@ CREATE TABLE users (
   pwdhash VARCHAR(132),
   picture_value_id INT UNSIGNED,
   _data LONGTEXT,
+  pwdreset_token TINYTEXT,
 
   PRIMARY KEY(id),
   UNIQUE(email),
@@ -66,13 +67,15 @@ CREATE TABLE course_design_templates (
   picture_value_id INT UNSIGNED,
   creator_id INT UNSIGNED NOT NULL,
   _data LONGTEXT,
+  logo_value_id INT UNSIGNED,
   defunct BOOLEAN NOT NULL DEFAULT FALSE,
   
   PRIMARY KEY(id),
   UNIQUE(_name),
   FOREIGN KEY(summary_value_id) REFERENCES _values(id) ON DELETE SET NULL ON UPDATE SET NULL,
   FOREIGN KEY(description_value_id) REFERENCES _values(id) ON DELETE SET NULL ON UPDATE SET NULL,
-  FOREIGN KEY(picture_value_id) REFERENCES _values(id) ON DELETE SET NULL ON UPDATE SET NULL
+  FOREIGN KEY(picture_value_id) REFERENCES _values(id) ON DELETE SET NULL ON UPDATE SET NULL,
+  FOREIGN KEY(logo_value_id) REFERENCES _values(id) ON DELETE SET NULL ON UPDATE SET NULL
 );
 
 CREATE TABLE course_delivery_instances (
@@ -84,6 +87,7 @@ CREATE TABLE course_delivery_instances (
   picture_value_id INT UNSIGNED,
 	creator_id INT UNSIGNED NOT NULL,
 	_data LONGTEXT,
+  logo_value_id INT UNSIGNED,
   defunct BOOLEAN NOT NULL DEFAULT FALSE,
   
   available_to_enroll BOOLEAN AS (enrollment_end_date > NOW() OR enrollment_end_date IS NULL) VIRTUAL,
@@ -97,14 +101,15 @@ CREATE TABLE course_delivery_instances (
   PRIMARY KEY(id),
   FOREIGN KEY(summary_value_id) REFERENCES _values(id) ON DELETE SET NULL ON UPDATE SET NULL,
   FOREIGN KEY(description_value_id) REFERENCES _values(id) ON DELETE SET NULL ON UPDATE SET NULL,
-  FOREIGN KEY(picture_value_id) REFERENCES _values(id) ON DELETE SET NULL ON UPDATE SET NULL
+  FOREIGN KEY(picture_value_id) REFERENCES _values(id) ON DELETE SET NULL ON UPDATE SET NULL,
+  FOREIGN KEY(logo_value_id) REFERENCES _values(id) ON DELETE SET NULL ON UPDATE SET NULL
 );
 
 CREATE TABLE course_design_sections (
 
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   course_id INT UNSIGNED NOT NULL,
-  _name VARCHAR(100) NOT NULL,
+  _name TEXT NOT NULL,
   summary_value_id INT UNSIGNED,
   sequence_number TINYINT UNSIGNED,
   
@@ -118,7 +123,7 @@ CREATE TABLE course_delivery_sections (
 
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   course_id INT UNSIGNED NOT NULL,
-  _name VARCHAR(100) NOT NULL,
+  _name TEXT NOT NULL,
   summary_value_id INT UNSIGNED,
   sequence_number TINYINT UNSIGNED,
   
@@ -132,7 +137,7 @@ CREATE TABLE course_design_subsections (
 
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   section_id INT UNSIGNED NOT NULL,
-  _name VARCHAR(100) NOT NULL,
+  _name TEXT NOT NULL,
   summary_value_id INT UNSIGNED,
   access_period INT UNSIGNED,
   expiration_period INT UNSIGNED,
@@ -148,7 +153,7 @@ CREATE TABLE course_delivery_subsections (
 
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   section_id INT UNSIGNED NOT NULL,
-  _name VARCHAR(100) NOT NULL,
+  _name TEXT NOT NULL,
   summary_value_id INT UNSIGNED,
   access_date DATETIME,
   expiration_date DATETIME,
@@ -164,7 +169,7 @@ CREATE TABLE course_design_units (
 
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   subsection_id INT UNSIGNED NOT NULL,
-  _name VARCHAR(100) NOT NULL,
+  _name TEXT NOT NULL,
   summary_value_id INT UNSIGNED,
   _type ENUM('document', 'file-document', 'video', 'quiz') NOT NULL,
   data_value_id INT UNSIGNED,
@@ -181,7 +186,7 @@ CREATE TABLE course_delivery_units (
 
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   subsection_id INT UNSIGNED NOT NULL,
-  _name VARCHAR(100) NOT NULL,
+  _name TEXT NOT NULL,
   summary_value_id INT UNSIGNED,
   _type ENUM('document', 'file-document', 'video', 'quiz') NOT NULL,
   data_value_id INT UNSIGNED,
@@ -251,4 +256,34 @@ CREATE TABLE quiz_attempts (
   FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY(unit_id) REFERENCES course_delivery_units(id) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY(data_value_id) REFERENCES _values(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE access_tokens (
+
+	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	_name TINYTEXT,
+  comments TEXT,
+  
+  PRIMARY KEY(id)
+);
+
+CREATE TABLE access_token_course_attachments (
+
+	access_token_id INT UNSIGNED NOT NULL,
+  course_id INT UNSIGNED NOT NULL,
+  
+  PRIMARY KEY(access_token_id, course_id),
+  FOREIGN KEY(access_token_id) REFERENCES access_tokens(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY(course_id) REFERENCES course_delivery_instances(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE access_token_user_attachments (
+
+  access_token_id INT UNSIGNED NOT NULL,
+  email VARCHAR(50) NOT NULL,
+	user_id INT UNSIGNED,
+  
+  PRIMARY KEY(access_token_id, email),
+	FOREIGN KEY(access_token_id) REFERENCES access_tokens(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
