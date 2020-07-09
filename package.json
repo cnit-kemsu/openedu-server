@@ -46,7 +46,7 @@
   },
   "scripts": {
     "start": "nodemon --watch webpack.config.babel.js --watch babel.config.js --exec webpack-dev-server",
-    "server": "nodemon --watch babel.config.js --watch src --exec node --inspect=9229 -r ./babel-register src/index.js",
+    "server": "nodemon --watch babel.config.js --watch src/**/*.* --exec node --inspect=9229 -r ./babel-register src/index.js",
     "build": "webpack --config webpack.config.build.babel.js",
     "prod-server": "nodemon --watch dist --exec \"node --inspect=9229 -r ./dist/main.js\"",
     "initdb": "node -r ./babel-register initdb.js"

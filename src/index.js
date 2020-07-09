@@ -32,7 +32,7 @@ userInfo(jwtSecret) |> app.use(#);
 async function graphqlOptions({ _user }) {
   const db = await pool.getConnection();
   return [{
-    userId: _user?.id,
+    userId: _user?.id || _user?.userId,
     db
   }, function() {
     if (db !== undefined) db.end();
